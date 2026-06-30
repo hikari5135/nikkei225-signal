@@ -140,7 +140,7 @@
 
   <div class="disclaimer">
     テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
-    本ツールは投資助言ではありません。マイクロ日経225先物そのものではなく日経平均株価指数のデータで代用しています。
+    本ツールは投資助言ではありません。
   </div>
 </div>
 
@@ -155,7 +155,8 @@ async function loadDashboard() {
     const data = await res.json();
 
     const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
-    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ' <span id="countdown"></span>';
+    const sourceLabel = data.data_source === 'NIY=F' ? 'CME日経225先物(円建て)' : '日経平均株価指数';
+    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel}`;
 
     content.innerHTML = `
       <div class="signal-card">
