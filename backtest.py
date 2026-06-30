@@ -5,12 +5,7 @@
 
 nikkei_daytrade_signal.py と全く同じシグナル判定ロジックを過去データに適用し、
 「もしこのシグナル通りに売買していたらどうなっていたか」を検証します。
-
-ルール:
-- 「買い」シグナルが出たらロングを建てる(ショートを保有していれば決済してドテン)
-- 「売り」シグナルが出たらショートを建てる(ロングを保有していれば決済してドテン)
-- 「様子見」では何もしない(ポジションがあればそのまま保有を続ける)
-- 最後まで残ったポジションはデータの最終足で強制決済する
+ATRベースの損切り(ATR×2)も組み込んでいます。
 
 注意:
 - スプレッド・手数料・スリッページは考慮していません(理論上の数値です)
@@ -53,6 +48,8 @@ def fetch_data(period="60d", interval="5m"):
 
 def add_indicators(df):
     close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
 
     df["MA5"] = close.rolling(5).mean()
     df["MA25"] = close.rolling(25).mean()
@@ -75,6 +72,13 @@ def add_indicators(df):
     bb_std = close.rolling(20).std()
     df["BB_upper"] = df["BB_mid"] + 2 * bb_std
     df["BB_lower"] = df["BB_mid"] - 2 * bb_std
+
+    tr = pd.concat([
+        high - low,
+        (high - close.shift()).abs(),
+        (low - close.shift()).abs(),
+    ], axis=1).max(axis=1)
+    df["ATR"] = tr.rolling(14).mean()
 
     return df
 
@@ -110,8 +114,8 @@ def judge_signal(row, prev_row):
     return "様子見"
 
 
-def run_backtest(df):
-    """シグナルに従って売買をシミュレーションする"""
+def run_backtest(df, atr_mult=2.0):
+    """シグナルに従って売買をシミュレーションする(ATRベースの損切り付き)"""
     trades = []
     position = None
 
@@ -121,25 +125,45 @@ def run_backtest(df):
     for i in range(1, len(rows)):
         row = rows[i]
         prev_row = rows[i - 1]
-        signal = judge_signal(row, prev_row)
         price = row["Close"]
+        high = row["High"]
+        low = row["Low"]
         time_str = times[i].strftime("%Y-%m-%d %H:%M")
+
+        if position is not None:
+            if position["side"] == "long" and low <= position["stop"]:
+                pnl = position["stop"] - position["entry_price"]
+                trades.append({**position, "exit_price": position["stop"], "exit_time": time_str, "pnl": pnl, "stop_loss": True})
+                position = None
+            elif position["side"] == "short" and high >= position["stop"]:
+                pnl = position["entry_price"] - position["stop"]
+                trades.append({**position, "exit_price": position["stop"], "exit_time": time_str, "pnl": pnl, "stop_loss": True})
+                position = None
+
+        signal = judge_signal(row, prev_row)
+        atr = row.get("ATR")
 
         if signal == "買い":
             if position and position["side"] == "short":
                 pnl = position["entry_price"] - price
                 trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
                 position = None
-            if position is None:
-                position = {"side": "long", "entry_price": price, "entry_time": time_str}
+            if position is None and atr and not pd.isna(atr):
+                position = {
+                    "side": "long", "entry_price": price, "entry_time": time_str,
+                    "stop": price - atr * atr_mult,
+                }
 
         elif signal == "売り":
             if position and position["side"] == "long":
                 pnl = price - position["entry_price"]
                 trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
                 position = None
-            if position is None:
-                position = {"side": "short", "entry_price": price, "entry_time": time_str}
+            if position is None and atr and not pd.isna(atr):
+                position = {
+                    "side": "short", "entry_price": price, "entry_time": time_str,
+                    "stop": price + atr * atr_mult,
+                }
 
     if position:
         last_price = rows[-1]["Close"]
@@ -179,6 +203,7 @@ def summarize(trades):
         "total_trades": len(trades),
         "win_trades": len(wins),
         "lose_trades": len(losses),
+        "stop_loss_trades": sum(1 for t in trades if t.get("stop_loss")),
         "win_rate": round(len(wins) / len(trades) * 100, 1) if trades else 0,
         "total_pnl": round(float(sum(pnls)), 2),
         "avg_win": round(float(np.mean(wins)), 2) if wins else 0,
