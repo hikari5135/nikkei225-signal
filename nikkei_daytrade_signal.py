@@ -82,16 +82,7 @@ def add_indicators(df):
     return df
 
 
-# 閑散時間帯(日本時間5:00-9:00、CME先物の動きが落ち着き東証も開いていない)
-# はノイズによるダマシが出やすいため、この時間帯は新規シグナルを採用しない
-INACTIVE_HOURS = set(range(5, 9))
-
-
-def is_active_hour(timestamp):
-    return timestamp.hour not in INACTIVE_HOURS
-
-
-def judge_signal(row, prev_row, timestamp=None):
+def judge_signal(row, prev_row):
     score = 0
     reasons = []
 
@@ -122,9 +113,6 @@ def judge_signal(row, prev_row, timestamp=None):
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
         reasons.append("price >= ボリンジャーバンド+2σ(反落の可能性)")
-
-    if timestamp is not None and not is_active_hour(timestamp):
-        return "様子見", score, ["閑散時間帯(5-9時)のため新規シグナルは見送り"]
 
     if score >= 3:
         signal = "買い"
@@ -216,7 +204,7 @@ def main():
     prev = df.iloc[-2]
     timestamp = df.index[-1].strftime("%Y-%m-%d %H:%M")
 
-    signal, score, reasons = judge_signal(latest, prev, df.index[-1])
+    signal, score, reasons = judge_signal(latest, prev)
     stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
 
     print(f"[{timestamp}] 判定: {signal} (スコア: {score:+.1f})")
