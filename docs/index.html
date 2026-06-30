@@ -7,15 +7,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0d1117;
-    --panel: #151b23;
-    --border: #232b35;
-    --text: #e6edf3;
-    --muted: #7d8590;
-    --buy: #2ea043;
-    --sell: #da3633;
-    --hold: #6e7681;
-    --accent: #4f8ef7;
+    --bg: #eef0f2;
+    --panel: #ffffff;
+    --border: #d8dce1;
+    --text: #20242b;
+    --muted: #6b7280;
+    --buy: #1d8a45;
+    --sell: #c0362c;
+    --hold: #6b7280;
+    --accent: #3f6fd1;
     --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
   * { box-sizing: border-box; }
@@ -58,6 +58,7 @@
     align-items: center;
     gap: 24px;
     flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .signal-badge {
     font-size: 28px;
@@ -82,6 +83,7 @@
     border-radius: 10px;
     padding: 16px 20px;
     margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .reasons h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .reasons ul { margin: 0; padding-left: 18px; }
@@ -93,6 +95,7 @@
     border-radius: 10px;
     padding: 16px 20px 20px;
     margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .chart-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .chart-grid {
@@ -197,14 +200,13 @@ async function loadDashboard() {
     const macdSignal = data.candles.map(c => c.macd_signal);
     const macdHist = data.candles.map(c => c.macd_hist);
 
-    const gridColor = '#232b35';
-    const textColor = '#7d8590';
+    const gridColor = '#dde1e6';
+    const textColor = '#6b7280';
     const commonScales = {
       x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor } },
       y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
     };
 
-    // 既存のチャートインスタンスが残っていれば破棄してから作り直す
     if (window._charts) {
       window._charts.forEach(c => c.destroy());
     }
@@ -215,7 +217,7 @@ async function loadDashboard() {
       data: {
         labels,
         datasets: [
-          { label: '終値', data: closes, borderColor: '#e6edf3', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+          { label: '終値', data: closes, borderColor: '#20242b', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
           { label: 'MA5', data: ma5, borderColor: '#4f8ef7', borderWidth: 1, pointRadius: 0, tension: 0.1 },
           { label: 'MA25', data: ma25, borderColor: '#f0883e', borderWidth: 1, pointRadius: 0, tension: 0.1 },
           { label: 'BB+2σ', data: bbUpper, borderColor: 'rgba(125,133,144,0.4)', borderWidth: 1, pointRadius: 0, borderDash: [4,4], tension: 0.1 },
@@ -271,7 +273,6 @@ async function loadDashboard() {
 
 loadDashboard();
 
-// 60秒おきにバックグラウンドでデータを再取得し、自動更新する
 const AUTO_REFRESH_SECONDS = 60;
 let secondsLeft = AUTO_REFRESH_SECONDS;
 
