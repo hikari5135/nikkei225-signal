@@ -1,27 +1,122 @@
 {
-  "updated_at": "2026-06-30T16:59:35.753281+00:00",
+  "updated_at": "2026-06-30T17:10:10.981355+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-04-20 20:30",
-  "period_end": "2026-07-01 01:45",
+  "period_end": "2026-07-01 02:00",
   "summary": {
-    "total_trades": 595,
-    "win_trades": 185,
-    "lose_trades": 410,
-    "stop_loss_trades": 132,
-    "win_rate": 31.1,
-    "total_pnl": 10822.5,
-    "avg_win": 353.35,
-    "avg_loss": -133.04,
-    "max_win": 3415.0,
-    "max_loss": -724.29,
-    "max_drawdown": -4346.43
+    "total_trades": 448,
+    "win_trades": 163,
+    "lose_trades": 285,
+    "stop_loss_trades": 0,
+    "win_rate": 36.4,
+    "total_pnl": 6190.0,
+    "avg_win": 365.12,
+    "avg_loss": -187.11,
+    "max_win": 2765.0,
+    "max_loss": -3775.0,
+    "max_drawdown": -10740.0
   },
   "trades": [
     {
       "side": "long",
+      "entry_price": 73140.0,
+      "entry_time": "2026-06-23 04:55",
+      "exit_price": 69365.0,
+      "exit_time": "2026-06-24 10:00",
+      "pnl": -3775.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69365.0,
+      "entry_time": "2026-06-24 10:00",
+      "exit_price": 69750.0,
+      "exit_time": "2026-06-24 11:10",
+      "pnl": -385.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69750.0,
+      "entry_time": "2026-06-24 11:10",
+      "exit_price": 69465.0,
+      "exit_time": "2026-06-24 11:35",
+      "pnl": -285.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69465.0,
+      "entry_time": "2026-06-24 11:35",
+      "exit_price": 69205.0,
+      "exit_time": "2026-06-24 13:55",
+      "pnl": 260.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69205.0,
+      "entry_time": "2026-06-24 13:55",
+      "exit_price": 69470.0,
+      "exit_time": "2026-06-24 15:30",
+      "pnl": 265.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69470.0,
+      "entry_time": "2026-06-24 15:30",
+      "exit_price": 69580.0,
+      "exit_time": "2026-06-24 15:50",
+      "pnl": -110.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69580.0,
+      "entry_time": "2026-06-24 15:50",
+      "exit_price": 69420.0,
+      "exit_time": "2026-06-24 16:00",
+      "pnl": -160.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69420.0,
+      "entry_time": "2026-06-24 16:00",
+      "exit_price": 69435.0,
+      "exit_time": "2026-06-24 17:15",
+      "pnl": -15.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69435.0,
+      "entry_time": "2026-06-24 17:15",
+      "exit_price": 69490.0,
+      "exit_time": "2026-06-24 20:25",
+      "pnl": 55.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69490.0,
+      "entry_time": "2026-06-24 20:25",
+      "exit_price": 69645.0,
+      "exit_time": "2026-06-24 20:35",
+      "pnl": -155.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69645.0,
+      "entry_time": "2026-06-24 20:35",
+      "exit_price": 69535.0,
+      "exit_time": "2026-06-24 21:50",
+      "pnl": -110.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69535.0,
+      "entry_time": "2026-06-24 21:50",
+      "exit_price": 69650.0,
+      "exit_time": "2026-06-24 23:40",
+      "pnl": -115.0
+    },
+    {
+      "side": "long",
       "entry_price": 69650.0,
       "entry_time": "2026-06-24 23:40",
-      "stop": 69038.21428571429,
       "exit_price": 69570.0,
       "exit_time": "2026-06-25 01:35",
       "pnl": -80.0
@@ -30,7 +125,6 @@
       "side": "short",
       "entry_price": 69570.0,
       "entry_time": "2026-06-25 01:35",
-      "stop": 69819.64285714286,
       "exit_price": 69355.0,
       "exit_time": "2026-06-25 03:30",
       "pnl": 215.0
@@ -39,7 +133,6 @@
       "side": "long",
       "entry_price": 69355.0,
       "entry_time": "2026-06-25 03:30",
-      "stop": 69027.14285714286,
       "exit_price": 69115.0,
       "exit_time": "2026-06-25 03:55",
       "pnl": -240.0
@@ -48,7 +141,6 @@
       "side": "short",
       "entry_price": 69115.0,
       "entry_time": "2026-06-25 03:55",
-      "stop": 69410.71428571429,
       "exit_price": 69200.0,
       "exit_time": "2026-06-25 04:40",
       "pnl": -85.0
@@ -57,53 +149,22 @@
       "side": "long",
       "entry_price": 69200.0,
       "entry_time": "2026-06-25 04:40",
-      "stop": 68874.28571428571,
-      "exit_price": 71165.0,
-      "exit_time": "2026-06-25 07:30",
-      "pnl": 1965.0
-    },
-    {
-      "side": "short",
-      "entry_price": 71165.0,
-      "entry_time": "2026-06-25 07:30",
-      "stop": 71632.14285714286,
-      "exit_price": 71230.0,
-      "exit_time": "2026-06-25 10:10",
-      "pnl": -65.0
-    },
-    {
-      "side": "long",
-      "entry_price": 71230.0,
-      "entry_time": "2026-06-25 10:10",
-      "stop": 70566.78571428571,
       "exit_price": 71965.0,
       "exit_time": "2026-06-25 13:30",
-      "pnl": 735.0
+      "pnl": 2765.0
     },
     {
       "side": "short",
       "entry_price": 71965.0,
       "entry_time": "2026-06-25 13:30",
-      "stop": 72228.57142857143,
-      "exit_price": 72228.57142857143,
-      "exit_time": "2026-06-25 13:50",
-      "pnl": -263.5714285714348,
-      "stop_loss": true
-    },
-    {
-      "side": "short",
-      "entry_price": 72490.0,
-      "entry_time": "2026-06-25 16:10",
-      "stop": 72808.21428571429,
       "exit_price": 72550.0,
       "exit_time": "2026-06-25 16:15",
-      "pnl": -60.0
+      "pnl": -585.0
     },
     {
       "side": "long",
       "entry_price": 72550.0,
       "entry_time": "2026-06-25 16:15",
-      "stop": 72244.64285714286,
       "exit_price": 72450.0,
       "exit_time": "2026-06-25 17:15",
       "pnl": -100.0
@@ -112,7 +173,6 @@
       "side": "short",
       "entry_price": 72450.0,
       "entry_time": "2026-06-25 17:15",
-      "stop": 72673.92857142857,
       "exit_price": 72450.0,
       "exit_time": "2026-06-25 18:20",
       "pnl": 0.0
@@ -121,7 +181,6 @@
       "side": "long",
       "entry_price": 72450.0,
       "entry_time": "2026-06-25 18:20",
-      "stop": 72223.92857142857,
       "exit_price": 72465.0,
       "exit_time": "2026-06-25 18:25",
       "pnl": 15.0
@@ -130,7 +189,6 @@
       "side": "short",
       "entry_price": 72465.0,
       "entry_time": "2026-06-25 18:25",
-      "stop": 72690.0,
       "exit_price": 72520.0,
       "exit_time": "2026-06-25 18:50",
       "pnl": -55.0
@@ -139,26 +197,14 @@
       "side": "long",
       "entry_price": 72520.0,
       "entry_time": "2026-06-25 18:50",
-      "stop": 72311.07142857143,
-      "exit_price": 72311.07142857143,
-      "exit_time": "2026-06-25 20:30",
-      "pnl": -208.9285714285652,
-      "stop_loss": true
-    },
-    {
-      "side": "long",
-      "entry_price": 72545.0,
-      "entry_time": "2026-06-25 21:35",
-      "stop": 72283.57142857143,
       "exit_price": 72330.0,
       "exit_time": "2026-06-25 22:20",
-      "pnl": -215.0
+      "pnl": -190.0
     },
     {
       "side": "short",
       "entry_price": 72330.0,
       "entry_time": "2026-06-25 22:20",
-      "stop": 72640.71428571429,
       "exit_price": 71700.0,
       "exit_time": "2026-06-26 01:10",
       "pnl": 630.0
@@ -167,7 +213,6 @@
       "side": "long",
       "entry_price": 71700.0,
       "entry_time": "2026-06-26 01:10",
-      "stop": 71164.28571428571,
       "exit_price": 71335.0,
       "exit_time": "2026-06-26 01:45",
       "pnl": -365.0
@@ -176,65 +221,22 @@
       "side": "short",
       "entry_price": 71335.0,
       "entry_time": "2026-06-26 01:45",
-      "stop": 71717.5,
-      "exit_price": 71355.0,
-      "exit_time": "2026-06-26 05:05",
-      "pnl": -20.0
-    },
-    {
-      "side": "long",
-      "entry_price": 71355.0,
-      "entry_time": "2026-06-26 05:05",
-      "stop": 71037.85714285714,
-      "exit_price": 71037.85714285714,
-      "exit_time": "2026-06-26 07:05",
-      "pnl": -317.14285714285506,
-      "stop_loss": true
-    },
-    {
-      "side": "short",
-      "entry_price": 71050.0,
-      "entry_time": "2026-06-26 07:05",
-      "stop": 71288.92857142857,
-      "exit_price": 71288.92857142857,
-      "exit_time": "2026-06-26 08:15",
-      "pnl": -238.9285714285652,
-      "stop_loss": true
-    },
-    {
-      "side": "short",
-      "entry_price": 70890.0,
-      "entry_time": "2026-06-26 08:55",
-      "stop": 71351.78571428571,
-      "exit_price": 71351.78571428571,
-      "exit_time": "2026-06-26 09:00",
-      "pnl": -461.7857142857101,
-      "stop_loss": true
+      "exit_price": 69290.0,
+      "exit_time": "2026-06-26 12:25",
+      "pnl": 2045.0
     },
     {
       "side": "long",
       "entry_price": 69290.0,
       "entry_time": "2026-06-26 12:25",
-      "stop": 68891.42857142857,
-      "exit_price": 68891.42857142857,
-      "exit_time": "2026-06-26 12:35",
-      "pnl": -398.5714285714348,
-      "stop_loss": true
-    },
-    {
-      "side": "long",
-      "entry_price": 69265.0,
-      "entry_time": "2026-06-26 13:20",
-      "stop": 68711.07142857143,
       "exit_price": 69070.0,
       "exit_time": "2026-06-26 13:35",
-      "pnl": -195.0
+      "pnl": -220.0
     },
     {
       "side": "short",
       "entry_price": 69070.0,
       "entry_time": "2026-06-26 13:35",
-      "stop": 69719.28571428571,
       "exit_price": 69335.0,
       "exit_time": "2026-06-26 14:25",
       "pnl": -265.0
@@ -243,7 +245,6 @@
       "side": "long",
       "entry_price": 69335.0,
       "entry_time": "2026-06-26 14:25",
-      "stop": 68857.14285714286,
       "exit_price": 69235.0,
       "exit_time": "2026-06-26 14:55",
       "pnl": -100.0
@@ -252,7 +253,6 @@
       "side": "short",
       "entry_price": 69235.0,
       "entry_time": "2026-06-26 14:55",
-      "stop": 69634.64285714286,
       "exit_price": 69255.0,
       "exit_time": "2026-06-26 15:10",
       "pnl": -20.0
@@ -261,7 +261,6 @@
       "side": "long",
       "entry_price": 69255.0,
       "entry_time": "2026-06-26 15:10",
-      "stop": 68874.64285714286,
       "exit_price": 69655.0,
       "exit_time": "2026-06-26 17:20",
       "pnl": 400.0
@@ -270,7 +269,6 @@
       "side": "short",
       "entry_price": 69655.0,
       "entry_time": "2026-06-26 17:20",
-      "stop": 70013.92857142857,
       "exit_price": 69335.0,
       "exit_time": "2026-06-26 20:10",
       "pnl": 320.0
@@ -279,7 +277,6 @@
       "side": "long",
       "entry_price": 69335.0,
       "entry_time": "2026-06-26 20:10",
-      "stop": 69088.57142857143,
       "exit_price": 69225.0,
       "exit_time": "2026-06-26 20:25",
       "pnl": -110.0
@@ -288,36 +285,14 @@
       "side": "short",
       "entry_price": 69225.0,
       "entry_time": "2026-06-26 20:25",
-      "stop": 69452.14285714286,
-      "exit_price": 69452.14285714286,
-      "exit_time": "2026-06-26 21:05",
-      "pnl": -227.14285714285506,
-      "stop_loss": true
-    },
-    {
-      "side": "short",
-      "entry_price": 69155.0,
-      "entry_time": "2026-06-26 21:45",
-      "stop": 69496.78571428571,
-      "exit_price": 69496.78571428571,
-      "exit_time": "2026-06-26 22:55",
-      "pnl": -341.7857142857101,
-      "stop_loss": true
-    },
-    {
-      "side": "short",
-      "entry_price": 69735.0,
-      "entry_time": "2026-06-27 00:00",
-      "stop": 70243.92857142857,
       "exit_price": 70005.0,
       "exit_time": "2026-06-27 01:30",
-      "pnl": -270.0
+      "pnl": -780.0
     },
     {
       "side": "long",
       "entry_price": 70005.0,
       "entry_time": "2026-06-27 01:30",
-      "stop": 69529.28571428571,
       "exit_price": 69905.0,
       "exit_time": "2026-06-27 02:35",
       "pnl": -100.0
@@ -326,7 +301,6 @@
       "side": "short",
       "entry_price": 69905.0,
       "entry_time": "2026-06-27 02:35",
-      "stop": 70164.28571428571,
       "exit_price": 69785.0,
       "exit_time": "2026-06-27 04:45",
       "pnl": 120.0
@@ -335,45 +309,22 @@
       "side": "long",
       "entry_price": 69785.0,
       "entry_time": "2026-06-27 04:45",
-      "stop": 69503.21428571429,
-      "exit_price": 69555.0,
-      "exit_time": "2026-06-27 05:05",
-      "pnl": -230.0
-    },
-    {
-      "side": "short",
-      "entry_price": 69555.0,
-      "entry_time": "2026-06-27 05:05",
-      "stop": 69895.71428571429,
-      "exit_price": 69895.71428571429,
-      "exit_time": "2026-06-29 07:10",
-      "pnl": -340.7142857142899,
-      "stop_loss": true
-    },
-    {
-      "side": "long",
-      "entry_price": 69140.0,
-      "entry_time": "2026-06-29 10:50",
-      "stop": 68388.92857142857,
       "exit_price": 68855.0,
       "exit_time": "2026-06-29 12:35",
-      "pnl": -285.0
+      "pnl": -930.0
     },
     {
       "side": "short",
       "entry_price": 68855.0,
       "entry_time": "2026-06-29 12:35",
-      "stop": 69167.85714285714,
-      "exit_price": 69167.85714285714,
-      "exit_time": "2026-06-29 12:50",
-      "pnl": -312.85714285714494,
-      "stop_loss": true
+      "exit_price": 69200.0,
+      "exit_time": "2026-06-29 13:00",
+      "pnl": -345.0
     },
     {
       "side": "long",
       "entry_price": 69200.0,
       "entry_time": "2026-06-29 13:00",
-      "stop": 68810.0,
       "exit_price": 68985.0,
       "exit_time": "2026-06-29 13:20",
       "pnl": -215.0
@@ -382,7 +333,6 @@
       "side": "short",
       "entry_price": 68985.0,
       "entry_time": "2026-06-29 13:20",
-      "stop": 69398.57142857143,
       "exit_price": 69100.0,
       "exit_time": "2026-06-29 14:30",
       "pnl": -115.0
@@ -391,7 +341,6 @@
       "side": "long",
       "entry_price": 69100.0,
       "entry_time": "2026-06-29 14:30",
-      "stop": 68713.21428571429,
       "exit_price": 70000.0,
       "exit_time": "2026-06-29 20:30",
       "pnl": 900.0
@@ -400,7 +349,6 @@
       "side": "short",
       "entry_price": 70000.0,
       "entry_time": "2026-06-29 20:30",
-      "stop": 70188.57142857143,
       "exit_price": 69765.0,
       "exit_time": "2026-06-30 00:00",
       "pnl": 235.0
@@ -409,25 +357,22 @@
       "side": "long",
       "entry_price": 69765.0,
       "entry_time": "2026-06-30 00:00",
-      "stop": 69112.5,
-      "exit_price": 70710.0,
-      "exit_time": "2026-06-30 05:50",
-      "pnl": 945.0
+      "exit_price": 70335.0,
+      "exit_time": "2026-06-30 09:20",
+      "pnl": 570.0
     },
     {
       "side": "short",
-      "entry_price": 70710.0,
-      "entry_time": "2026-06-30 05:50",
-      "stop": 70858.92857142857,
+      "entry_price": 70335.0,
+      "entry_time": "2026-06-30 09:20",
       "exit_price": 70070.0,
       "exit_time": "2026-06-30 11:05",
-      "pnl": 640.0
+      "pnl": 265.0
     },
     {
       "side": "long",
       "entry_price": 70070.0,
       "entry_time": "2026-06-30 11:05",
-      "stop": 69495.71428571429,
       "exit_price": 70680.0,
       "exit_time": "2026-06-30 14:45",
       "pnl": 610.0
@@ -436,7 +381,6 @@
       "side": "short",
       "entry_price": 70680.0,
       "entry_time": "2026-06-30 14:45",
-      "stop": 70942.5,
       "exit_price": 70400.0,
       "exit_time": "2026-06-30 16:35",
       "pnl": 280.0
@@ -445,7 +389,6 @@
       "side": "long",
       "entry_price": 70400.0,
       "entry_time": "2026-06-30 16:35",
-      "stop": 70153.57142857143,
       "exit_price": 70260.0,
       "exit_time": "2026-06-30 17:00",
       "pnl": -140.0
@@ -454,7 +397,6 @@
       "side": "short",
       "entry_price": 70260.0,
       "entry_time": "2026-06-30 17:00",
-      "stop": 70468.92857142857,
       "exit_price": 70020.0,
       "exit_time": "2026-06-30 19:30",
       "pnl": 240.0
@@ -463,7 +405,6 @@
       "side": "long",
       "entry_price": 70020.0,
       "entry_time": "2026-06-30 19:30",
-      "stop": 69838.92857142857,
       "exit_price": 71035.0,
       "exit_time": "2026-06-30 23:55",
       "pnl": 1015.0
@@ -472,10 +413,9 @@
       "side": "short",
       "entry_price": 71035.0,
       "entry_time": "2026-06-30 23:55",
-      "stop": 71333.92857142857,
-      "exit_price": 71300.0,
-      "exit_time": "2026-07-01 01:45",
-      "pnl": -265.0,
+      "exit_price": 71280.0,
+      "exit_time": "2026-07-01 02:00",
+      "pnl": -245.0,
       "forced_exit": true
     }
   ]
