@@ -120,6 +120,27 @@
   }
   .error { color: var(--sell); }
 
+  .backtest-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .backtest-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .backtest-period { font-size: 12px; color: var(--muted); margin-bottom: 12px; font-family: var(--mono); }
+  .backtest-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+  }
+  .stat-box { text-align: center; }
+  .stat-value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+  .stat-value.pos { color: var(--buy); }
+  .stat-value.neg { color: var(--sell); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
   @media (max-width: 640px) {
     .chart-grid { grid-template-columns: 1fr; }
     .price { font-size: 22px; }
@@ -137,6 +158,8 @@
   <div id="content">
     <div class="loading">データを読み込んでいます...</div>
   </div>
+
+  <div id="backtest-section"></div>
 
   <div class="disclaimer">
     テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
@@ -273,6 +296,35 @@ async function loadDashboard() {
 }
 
 loadDashboard();
+
+async function loadBacktest() {
+  const section = document.getElementById('backtest-section');
+  try {
+    const res = await fetch('backtest.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(同ロジックを過去データに適用した場合)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}</div>
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value">${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+  }
+}
+loadBacktest();
 
 const AUTO_REFRESH_SECONDS = 60;
 let secondsLeft = AUTO_REFRESH_SECONDS;
