@@ -36,6 +36,10 @@ def fetch_data(period="5d", interval="5m"):
         if df is not None and not df.empty:
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+            if df.index.tz is None:
+                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
+            else:
+                df.index = df.index.tz_convert("Asia/Tokyo")
             print(f"データ取得元: {ticker}")
             return df, ticker
     raise RuntimeError("データ取得に失敗しました。市場が開いていない、もしくはネットワーク接続を確認してください。")
@@ -79,8 +83,6 @@ def judge_signal(row, prev_row):
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
         score -= 3
         reasons.append("MA5がMA25を下抜け(デッドクロス)")
-    # ("トレンド継続中は常に加点"の弱いシグナルは廃止。
-    #  バックテストの結果、毎回スコアが乗ることで過剰売買(オーバートレード)の主因と判明したため)
 
     if row["RSI"] < 30:
         score += 1.5
