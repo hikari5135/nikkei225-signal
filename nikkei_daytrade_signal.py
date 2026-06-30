@@ -124,7 +124,7 @@ def judge_signal(row, prev_row):
     return signal, score, reasons
 
 
-def calc_stop_price(signal, close_price, atr, atr_mult=2.0):
+def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
     """ATRベースの推奨損切りラインを計算する(参考値)"""
     if atr is None or pd.isna(atr):
         return None
@@ -138,7 +138,7 @@ def calc_stop_price(signal, close_price, atr, atr_mult=2.0):
 def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
     emoji = "🟢" if signal == "買い" else "🔴"
     reasons_text = "\n".join(f"・{r}" for r in reasons)
-    stop_text = f"\n推奨損切りライン(ATR×2): {stop_price:,.2f}" if stop_price else ""
+    stop_text = f"\n推奨損切りライン(ATR×3): {stop_price:,.2f}" if stop_price else ""
     text = (
         f"{emoji} *マイクロ日経225 シグナル: {signal}* (スコア: {score:+.1f})\n"
         f"時刻: {timestamp}\n"
@@ -211,7 +211,7 @@ def main():
     for r in reasons:
         print(f"  - {r}")
     if stop_price:
-        print(f"  推奨損切りライン(ATR×2): {stop_price:,.2f}")
+        print(f"  推奨損切りライン(ATR×3): {stop_price:,.2f}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price)
