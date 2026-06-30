@@ -11,7 +11,6 @@ nikkei_daytrade_signal.py と全く同じシグナル判定ロジックを過去
 - 「売り」シグナルが出たらショートを建てる(ロングを保有していれば決済してドテン)
 - 「様子見」では何もしない(ポジションがあればそのまま保有を続ける)
 - 最後まで残ったポジションはデータの最終足で強制決済する
-- 日本時間5:00-9:00の閑散時間帯は新規シグナルを採用しない
 
 注意:
 - スプレッド・手数料・スリッページは考慮していません(理論上の数値です)
@@ -89,14 +88,7 @@ def add_indicators(df):
     return df
 
 
-INACTIVE_HOURS = set(range(5, 9))
-
-
-def is_active_hour(timestamp):
-    return timestamp.hour not in INACTIVE_HOURS
-
-
-def judge_signal(row, prev_row, timestamp=None):
+def judge_signal(row, prev_row):
     """nikkei_daytrade_signal.py と同一ロジック"""
     score = 0
 
@@ -120,9 +112,6 @@ def judge_signal(row, prev_row, timestamp=None):
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
 
-    if timestamp is not None and not is_active_hour(timestamp):
-        return "様子見"
-
     if score >= 3:
         return "買い"
     elif score <= -3:
@@ -141,7 +130,7 @@ def run_backtest(df):
     for i in range(1, len(rows)):
         row = rows[i]
         prev_row = rows[i - 1]
-        signal = judge_signal(row, prev_row, times[i])
+        signal = judge_signal(row, prev_row)
         price = row["Close"]
         time_str = times[i].strftime("%Y-%m-%d %H:%M")
 
