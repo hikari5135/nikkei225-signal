@@ -47,6 +47,8 @@ def fetch_data(period="5d", interval="5m"):
 
 def add_indicators(df):
     close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
 
     df["MA5"] = close.rolling(5).mean()
     df["MA25"] = close.rolling(25).mean()
@@ -69,6 +71,13 @@ def add_indicators(df):
     bb_std = close.rolling(20).std()
     df["BB_upper"] = df["BB_mid"] + 2 * bb_std
     df["BB_lower"] = df["BB_mid"] - 2 * bb_std
+
+    tr = pd.concat([
+        high - low,
+        (high - close.shift()).abs(),
+        (low - close.shift()).abs(),
+    ], axis=1).max(axis=1)
+    df["ATR"] = tr.rolling(14).mean()
 
     return df
 
@@ -115,15 +124,28 @@ def judge_signal(row, prev_row):
     return signal, score, reasons
 
 
-def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp):
+def calc_stop_price(signal, close_price, atr, atr_mult=2.0):
+    """ATRベースの推奨損切りラインを計算する(参考値)"""
+    if atr is None or pd.isna(atr):
+        return None
+    if signal == "買い":
+        return round(float(close_price - atr * atr_mult), 2)
+    elif signal == "売り":
+        return round(float(close_price + atr * atr_mult), 2)
+    return None
+
+
+def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
     emoji = "🟢" if signal == "買い" else "🔴"
     reasons_text = "\n".join(f"・{r}" for r in reasons)
+    stop_text = f"\n推奨損切りライン(ATR×2): {stop_price:,.2f}" if stop_price else ""
     text = (
         f"{emoji} *マイクロ日経225 シグナル: {signal}* (スコア: {score:+.1f})\n"
         f"時刻: {timestamp}\n"
         f"日経平均: {latest['Close']:.2f}\n"
         f"MA5: {latest['MA5']:.2f} / MA25: {latest['MA25']:.2f}\n"
-        f"RSI: {latest['RSI']:.1f}\n"
+        f"RSI: {latest['RSI']:.1f}"
+        f"{stop_text}\n"
         f"\n根拠:\n{reasons_text}\n"
         f"\n※テクニカル指標による参考情報です。投資判断は自己責任で行ってください。"
     )
@@ -131,7 +153,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -160,6 +182,7 @@ def build_json(df, signal, score, reasons, timestamp, ticker):
         "signal": signal,
         "score": score,
         "reasons": reasons,
+        "stop_price": stop_price,
         "candles": candles,
         "data_source": ticker,
     }
@@ -182,13 +205,16 @@ def main():
     timestamp = df.index[-1].strftime("%Y-%m-%d %H:%M")
 
     signal, score, reasons = judge_signal(latest, prev)
+    stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
 
     print(f"[{timestamp}] 判定: {signal} (スコア: {score:+.1f})")
     for r in reasons:
         print(f"  - {r}")
+    if stop_price:
+        print(f"  推奨損切りライン(ATR×2): {stop_price:,.2f}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"データを書き出しました: {OUTPUT_PATH}")
@@ -201,7 +227,7 @@ def main():
         print("警告: SLACK_WEBHOOK_URLが設定されていないため通知をスキップします。")
         return
 
-    send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp)
+    send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price)
     print("Slackに通知しました。")
 
 
