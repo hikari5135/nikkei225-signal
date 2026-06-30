@@ -152,7 +152,7 @@ async function loadDashboard() {
     const data = await res.json();
 
     const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
-    updatedEl.textContent = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP');
+    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ' <span id="countdown"></span>';
 
     content.innerHTML = `
       <div class="signal-card">
@@ -204,7 +204,13 @@ async function loadDashboard() {
       y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
     };
 
-    new Chart(document.getElementById('priceChart'), {
+    // 既存のチャートインスタンスが残っていれば破棄してから作り直す
+    if (window._charts) {
+      window._charts.forEach(c => c.destroy());
+    }
+    window._charts = [];
+
+    window._charts.push(new Chart(document.getElementById('priceChart'), {
       type: 'line',
       data: {
         labels,
@@ -222,9 +228,9 @@ async function loadDashboard() {
         plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
         scales: commonScales
       }
-    });
+    }));
 
-    new Chart(document.getElementById('rsiChart'), {
+    window._charts.push(new Chart(document.getElementById('rsiChart'), {
       type: 'line',
       data: {
         labels,
@@ -238,9 +244,9 @@ async function loadDashboard() {
           y: { min: 0, max: 100, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
         }
       }
-    });
+    }));
 
-    new Chart(document.getElementById('macdChart'), {
+    window._charts.push(new Chart(document.getElementById('macdChart'), {
       type: 'bar',
       data: {
         labels,
@@ -255,7 +261,7 @@ async function loadDashboard() {
         plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
         scales: commonScales
       }
-    });
+    }));
 
   } catch (err) {
     content.innerHTML = `<div class="error">データの読み込みに失敗しました: ${err.message}<br>まだGitHub Actionsが一度も実行されていない場合は、手動実行してから再読み込みしてください。</div>`;
@@ -264,6 +270,22 @@ async function loadDashboard() {
 }
 
 loadDashboard();
+
+// 60秒おきにバックグラウンドでデータを再取得し、自動更新する
+const AUTO_REFRESH_SECONDS = 60;
+let secondsLeft = AUTO_REFRESH_SECONDS;
+
+setInterval(() => {
+  secondsLeft -= 1;
+  if (secondsLeft <= 0) {
+    loadDashboard();
+    secondsLeft = AUTO_REFRESH_SECONDS;
+  }
+  const countdownEl = document.getElementById('countdown');
+  if (countdownEl) {
+    countdownEl.textContent = `(${secondsLeft}秒後に自動更新)`;
+  }
+}, 1000);
 </script>
 </body>
 </html>
