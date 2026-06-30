@@ -5,7 +5,7 @@
 
 nikkei_daytrade_signal.py と全く同じシグナル判定ロジックを過去データに適用し、
 「もしこのシグナル通りに売買していたらどうなっていたか」を検証します。
-ATRベースの損切り(ATR×2)も組み込んでいます。
+ATRベースの損切り(ATR×3)も組み込んでいます。
 
 注意:
 - スプレッド・手数料・スリッページは考慮していません(理論上の数値です)
@@ -114,7 +114,7 @@ def judge_signal(row, prev_row):
     return "様子見"
 
 
-def run_backtest(df, atr_mult=2.0):
+def run_backtest(df, atr_mult=3.0):
     """シグナルに従って売買をシミュレーションする(ATRベースの損切り付き)"""
     trades = []
     position = None
