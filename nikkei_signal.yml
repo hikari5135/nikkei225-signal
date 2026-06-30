@@ -1,0 +1,30 @@
+name: Nikkei225 Daytrade Signal
+
+on:
+  schedule:
+    # 日本時間9:00-翌6:00をカバー(UTC 0:00-21:00、15分おき)
+    # 前場 9:00-11:30 JST = 0:00-2:30 UTC
+    # 後場 12:30-15:00 JST = 3:30-6:00 UTC
+    # ナイトセッション 16:30-翌6:00 JST = 7:30-21:00 UTC
+    - cron: "*/15 0-21 * * 1-5"
+  workflow_dispatch: {}  # 手動実行用ボタン
+
+jobs:
+  signal-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install yfinance pandas numpy requests
+
+      - name: Run signal check
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python nikkei_daytrade_signal.py
