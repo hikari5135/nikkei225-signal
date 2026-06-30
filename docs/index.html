@@ -188,7 +188,7 @@ async function loadDashboard() {
           <div class="price">¥${data.latest_close.toLocaleString()}</div>
           <div class="price-time">${data.latest_time} 時点</div>
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
-          ${data.stop_price ? `<div class="score">推奨損切りライン(ATR×2): ¥${data.stop_price.toLocaleString()}</div>` : ''}
+          ${data.stop_price ? `<div class="score">推奨損切りライン(ATR×3): ¥${data.stop_price.toLocaleString()}</div>` : ''}
         </div>
       </div>
 
