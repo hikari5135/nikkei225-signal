@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-マイクロ日経225 デイトレード エントリー判断ツール (Slack通知版)
-==============================================================
+マイクロ日経225 デイトレード エントリー判断ツール (ダッシュボード対応版)
+========================================================================
 
-GitHub Actionsでの定期実行を想定。シグナルが「買い」または「売り」の場合のみ
-Slackに通知します(様子見の場合は通知しません)。
+実行のたびに、最新のローソク足・指標・シグナルを docs/data.json に書き出します。
+これを docs/index.html (GitHub Pages) が読み込んでチャート表示します。
+あわせて、買い/売りシグナルが出た場合はSlackに通知します。
 
 【必要な環境変数】
-  SLACK_WEBHOOK_URL : SlackのIncoming Webhook URL
+  SLACK_WEBHOOK_URL : SlackのIncoming Webhook URL (任意。無くても動作する)
 
 【必要ライブラリ】
   pip install yfinance pandas numpy requests --break-system-packages
@@ -15,11 +16,15 @@ Slackに通知します(様子見の場合は通知しません)。
 
 import os
 import sys
+import json
 import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
 
 
 def fetch_data(period="5d", interval="5m"):
@@ -108,10 +113,8 @@ def judge_signal(row, prev_row):
 
 
 def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp):
-    emoji = "🟢" if signal == "買い" else "🔴" if signal == "売り" else "⚪"
-
+    emoji = "🟢" if signal == "買い" else "🔴"
     reasons_text = "\n".join(f"・{r}" for r in reasons)
-
     text = (
         f"{emoji} *マイクロ日経225 シグナル: {signal}* (スコア: {score:+.1f})\n"
         f"時刻: {timestamp}\n"
@@ -121,10 +124,43 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
         f"\n根拠:\n{reasons_text}\n"
         f"\n※テクニカル指標による参考情報です。投資判断は自己責任で行ってください。"
     )
-
-    payload = {"text": text}
-    resp = requests.post(webhook_url, json=payload, timeout=10)
+    resp = requests.post(webhook_url, json={"text": text}, timeout=10)
     resp.raise_for_status()
+
+
+def build_json(df, signal, score, reasons, timestamp):
+    # 直近100本程度に絞ってJSONサイズを抑える
+    recent = df.tail(100).copy()
+    candles = []
+    for ts, row in recent.iterrows():
+        candles.append({
+            "time": ts.strftime("%Y-%m-%d %H:%M"),
+            "open": round(float(row["Open"]), 2),
+            "high": round(float(row["High"]), 2),
+            "low": round(float(row["Low"]), 2),
+            "close": round(float(row["Close"]), 2),
+            "ma5": None if pd.isna(row["MA5"]) else round(float(row["MA5"]), 2),
+            "ma25": None if pd.isna(row["MA25"]) else round(float(row["MA25"]), 2),
+            "rsi": None if pd.isna(row["RSI"]) else round(float(row["RSI"]), 1),
+            "macd": None if pd.isna(row["MACD"]) else round(float(row["MACD"]), 2),
+            "macd_signal": None if pd.isna(row["MACD_signal"]) else round(float(row["MACD_signal"]), 2),
+            "macd_hist": None if pd.isna(row["MACD_hist"]) else round(float(row["MACD_hist"]), 2),
+            "bb_upper": None if pd.isna(row["BB_upper"]) else round(float(row["BB_upper"]), 2),
+            "bb_lower": None if pd.isna(row["BB_lower"]) else round(float(row["BB_lower"]), 2),
+        })
+
+    latest = df.iloc[-1]
+
+    data = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "latest_time": timestamp,
+        "latest_close": round(float(latest["Close"]), 2),
+        "signal": signal,
+        "score": score,
+        "reasons": reasons,
+        "candles": candles,
+    }
+    return data
 
 
 def main():
@@ -148,7 +184,14 @@ def main():
     for r in reasons:
         print(f"  - {r}")
 
-    # 様子見の場合は通知しない
+    # JSON出力 (ダッシュボード用)
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    data = build_json(df, signal, score, reasons, timestamp)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"データを書き出しました: {OUTPUT_PATH}")
+
+    # Slack通知 (様子見の場合はスキップ)
     if signal == "様子見":
         print("様子見のため通知はスキップします。")
         return
