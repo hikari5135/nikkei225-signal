@@ -80,13 +80,9 @@ def judge_signal(row, prev_row):
     score = 0
 
     if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
-        score += 2
+        score += 3
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
-        score -= 2
-    elif row["MA5"] > row["MA25"]:
-        score += 0.5
-    else:
-        score -= 0.5
+        score -= 3
 
     if row["RSI"] < 30:
         score += 1.5
@@ -103,9 +99,9 @@ def judge_signal(row, prev_row):
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
 
-    if score >= 2:
+    if score >= 3:
         return "買い"
-    elif score <= -2:
+    elif score <= -3:
         return "売り"
     return "様子見"
 
@@ -113,7 +109,7 @@ def judge_signal(row, prev_row):
 def run_backtest(df):
     """シグナルに従って売買をシミュレーションする"""
     trades = []
-    position = None  # {'side': 'long'/'short', 'entry_price': float, 'entry_time': str}
+    position = None
 
     rows = df.to_dict("records")
     times = df.index.tolist()
@@ -141,7 +137,6 @@ def run_backtest(df):
             if position is None:
                 position = {"side": "short", "entry_price": price, "entry_time": time_str}
 
-    # 最後に残ったポジションを強制決済
     if position:
         last_price = rows[-1]["Close"]
         last_time = times[-1].strftime("%Y-%m-%d %H:%M")
@@ -171,7 +166,6 @@ def summarize(trades):
     wins = [p for p in pnls if p > 0]
     losses = [p for p in pnls if p <= 0]
 
-    # 簡易最大ドローダウン(累積損益の山から谷)
     cum = np.cumsum(pnls)
     peak = np.maximum.accumulate(cum)
     drawdown = cum - peak
@@ -219,7 +213,7 @@ def main():
         "period_start": df.index[0].strftime("%Y-%m-%d %H:%M"),
         "period_end": df.index[-1].strftime("%Y-%m-%d %H:%M"),
         "summary": summary,
-        "trades": trades[-50:],  # 直近50件のみ保存(サイズ抑制)
+        "trades": trades[-50:],
     }
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
