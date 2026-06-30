@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-30T17:47:18.833457+00:00",
+  "updated_at": "2026-06-30T17:49:28.794266+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-04-20 20:30",
   "period_end": "2026-07-01 02:35",
@@ -9,9 +9,9 @@
     "lose_trades": 338,
     "stop_loss_trades": 0,
     "win_rate": 35.5,
-    "total_pnl": 13900.0,
-    "avg_win": 361.42,
-    "avg_loss": -157.77,
+    "total_pnl": 13450.0,
+    "avg_win": 360.4,
+    "avg_loss": -158.54,
     "max_win": 3415.0,
     "max_loss": -2180.0,
     "max_drawdown": -4180.0
