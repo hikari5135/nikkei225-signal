@@ -42,6 +42,10 @@ def fetch_data(period="60d", interval="5m"):
         if df is not None and not df.empty:
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+            if df.index.tz is None:
+                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
+            else:
+                df.index = df.index.tz_convert("Asia/Tokyo")
             print(f"データ取得元: {ticker} ({len(df)}本)")
             return df, ticker
     raise RuntimeError("データ取得に失敗しました。")
