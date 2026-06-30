@@ -7,9 +7,6 @@
 これを docs/index.html (GitHub Pages) が読み込んでチャート表示します。
 あわせて、買い/売りシグナルが出た場合はSlackに通知します。
 
-データは CME円建て日経225先物(NIY=F、ほぼ24時間取引)を優先的に使用し、
-取得できない場合のみ日経平均株価指数(^N225、東証取引時間のみ)にフォールバックします。
-
 【必要な環境変数】
   SLACK_WEBHOOK_URL : SlackのIncoming Webhook URL (任意。無くても動作する)
 
@@ -31,8 +28,6 @@ OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "
 
 
 def fetch_data(period="5d", interval="5m"):
-    # 第一候補: CME 円建て日経225先物 (ほぼ24時間取引、マイクロ日経225に近い値動き)
-    # 第二候補: 日経平均株価指数(現物、東証の取引時間のみ)
     for ticker in ("NIY=F", "^N225"):
         try:
             df = yf.download(ticker, period=period, interval=interval, progress=False)
@@ -79,17 +74,13 @@ def judge_signal(row, prev_row):
     reasons = []
 
     if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
-        score += 2
+        score += 3
         reasons.append("MA5がMA25を上抜け(ゴールデンクロス)")
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
-        score -= 2
+        score -= 3
         reasons.append("MA5がMA25を下抜け(デッドクロス)")
-    elif row["MA5"] > row["MA25"]:
-        score += 0.5
-        reasons.append("短期MAが長期MAの上(上昇トレンド継続)")
-    else:
-        score -= 0.5
-        reasons.append("短期MAが長期MAの下(下降トレンド継続)")
+    # ("トレンド継続中は常に加点"の弱いシグナルは廃止。
+    #  バックテストの結果、毎回スコアが乗ることで過剰売買(オーバートレード)の主因と判明したため)
 
     if row["RSI"] < 30:
         score += 1.5
@@ -112,9 +103,9 @@ def judge_signal(row, prev_row):
         score -= 1
         reasons.append("price >= ボリンジャーバンド+2σ(反落の可能性)")
 
-    if score >= 2:
+    if score >= 3:
         signal = "買い"
-    elif score <= -2:
+    elif score <= -3:
         signal = "売り"
     else:
         signal = "様子見"
@@ -139,7 +130,6 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
 
 
 def build_json(df, signal, score, reasons, timestamp, ticker):
-    # 直近100本程度に絞ってJSONサイズを抑える
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -195,14 +185,12 @@ def main():
     for r in reasons:
         print(f"  - {r}")
 
-    # JSON出力 (ダッシュボード用)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     data = build_json(df, signal, score, reasons, timestamp, ticker)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"データを書き出しました: {OUTPUT_PATH}")
 
-    # Slack通知 (様子見の場合はスキップ)
     if signal == "様子見":
         print("様子見のため通知はスキップします。")
         return
