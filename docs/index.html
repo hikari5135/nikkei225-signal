@@ -188,6 +188,7 @@ async function loadDashboard() {
           <div class="price">¥${data.latest_close.toLocaleString()}</div>
           <div class="price-time">${data.latest_time} 時点</div>
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
+          ${data.stop_price ? `<div class="score">推奨損切りライン(ATR×2): ¥${data.stop_price.toLocaleString()}</div>` : ''}
         </div>
       </div>
 
@@ -318,6 +319,7 @@ async function loadBacktest() {
           <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value">${s.stop_loss_trades || 0}</div><div class="stat-label">損切り発動件数</div></div>
         </div>
       </div>
     `;
