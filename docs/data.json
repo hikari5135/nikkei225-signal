@@ -1,29 +1,12 @@
 {
-  "updated_at": "2026-06-30T22:32:12.078073+00:00",
-  "latest_time": "2026-07-01 07:15",
-  "latest_close": 71125.0,
+  "updated_at": "2026-06-30T22:40:29.227810+00:00",
+  "latest_time": "2026-07-01 07:20",
+  "latest_close": 71140.0,
   "signal": "様子見",
-  "score": 1.5,
-  "reasons": [
-    "MACDヒストグラムがプラス転換"
-  ],
+  "score": 0,
+  "reasons": [],
   "stop_price": null,
   "candles": [
-    {
-      "time": "2026-06-30 22:00",
-      "open": 70195.0,
-      "high": 70245.0,
-      "low": 70180.0,
-      "close": 70230.0,
-      "ma5": 70221.0,
-      "ma25": 70243.0,
-      "rsi": 41.9,
-      "macd": 9.59,
-      "macd_signal": 16.04,
-      "macd_hist": -6.45,
-      "bb_upper": 70356.6,
-      "bb_lower": 70115.4
-    },
     {
       "time": "2026-06-30 22:05",
       "open": 70245.0,
@@ -1508,6 +1491,21 @@
       "macd_hist": 1.11,
       "bb_upper": 71320.09,
       "bb_lower": 70964.41
+    },
+    {
+      "time": "2026-07-01 07:20",
+      "open": 71135.0,
+      "high": 71140.0,
+      "low": 71135.0,
+      "close": 71140.0,
+      "ma5": 71097.0,
+      "ma25": 71171.2,
+      "rsi": 42.5,
+      "macd": -49.85,
+      "macd_signal": -56.71,
+      "macd_hist": 6.86,
+      "bb_upper": 71299.67,
+      "bb_lower": 70970.33
     }
   ],
   "data_source": "NIY=F"
