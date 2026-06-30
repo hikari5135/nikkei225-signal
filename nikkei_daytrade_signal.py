@@ -82,7 +82,16 @@ def add_indicators(df):
     return df
 
 
-def judge_signal(row, prev_row):
+# 閑散時間帯(日本時間5:00-9:00、CME先物の動きが落ち着き東証も開いていない)
+# はノイズによるダマシが出やすいため、この時間帯は新規シグナルを採用しない
+INACTIVE_HOURS = set(range(5, 9))
+
+
+def is_active_hour(timestamp):
+    return timestamp.hour not in INACTIVE_HOURS
+
+
+def judge_signal(row, prev_row, timestamp=None):
     score = 0
     reasons = []
 
@@ -114,6 +123,9 @@ def judge_signal(row, prev_row):
         score -= 1
         reasons.append("price >= ボリンジャーバンド+2σ(反落の可能性)")
 
+    if timestamp is not None and not is_active_hour(timestamp):
+        return "様子見", score, ["閑散時間帯(5-9時)のため新規シグナルは見送り"]
+
     if score >= 3:
         signal = "買い"
     elif score <= -3:
@@ -125,7 +137,7 @@ def judge_signal(row, prev_row):
 
 
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
-    """ATRベースの推奨損切りラインを計算する(参考値)"""
+    """ATRベースの推奨損切りラインを計算する(参考値、判定には使わない)"""
     if atr is None or pd.isna(atr):
         return None
     if signal == "買い":
@@ -138,7 +150,7 @@ def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
 def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
     emoji = "🟢" if signal == "買い" else "🔴"
     reasons_text = "\n".join(f"・{r}" for r in reasons)
-    stop_text = f"\n推奨損切りライン(ATR×3): {stop_price:,.2f}" if stop_price else ""
+    stop_text = f"\n参考損切りライン(ATR×3): {stop_price:,.2f}" if stop_price else ""
     text = (
         f"{emoji} *マイクロ日経225 シグナル: {signal}* (スコア: {score:+.1f})\n"
         f"時刻: {timestamp}\n"
@@ -204,14 +216,14 @@ def main():
     prev = df.iloc[-2]
     timestamp = df.index[-1].strftime("%Y-%m-%d %H:%M")
 
-    signal, score, reasons = judge_signal(latest, prev)
+    signal, score, reasons = judge_signal(latest, prev, df.index[-1])
     stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
 
     print(f"[{timestamp}] 判定: {signal} (スコア: {score:+.1f})")
     for r in reasons:
         print(f"  - {r}")
     if stop_price:
-        print(f"  推奨損切りライン(ATR×3): {stop_price:,.2f}")
+        print(f"  参考損切りライン(ATR×3): {stop_price:,.2f}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price)
