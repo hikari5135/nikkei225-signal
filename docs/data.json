@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-07-01T02:46:23.691840+00:00",
+  "updated_at": "2026-07-01T02:50:38.230481+00:00",
   "latest_time": "2026-07-01 11:35",
-  "latest_close": 70450.0,
+  "latest_close": 70435.0,
   "signal": "様子見",
   "score": 1.5,
   "reasons": [
-    "RSI=29.9(売られすぎ圏)"
+    "RSI=28.7(売られすぎ圏)"
   ],
   "stop_price": null,
   "candles": [
@@ -1499,15 +1499,15 @@
       "open": 70415.0,
       "high": 70450.0,
       "low": 70400.0,
-      "close": 70450.0,
-      "ma5": 70428.0,
-      "ma25": 70938.0,
-      "rsi": 29.9,
-      "macd": -249.1,
-      "macd_signal": -238.15,
-      "macd_hist": -10.95,
-      "bb_upper": 71377.48,
-      "bb_lower": 70018.52
+      "close": 70435.0,
+      "ma5": 70425.0,
+      "ma25": 70937.4,
+      "rsi": 28.7,
+      "macd": -250.29,
+      "macd_signal": -238.39,
+      "macd_hist": -11.9,
+      "bb_upper": 71377.91,
+      "bb_lower": 70016.59
     }
   ],
   "data_source": "NIY=F"
