@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-07-01T16:10:14.207281+00:00",
+  "updated_at": "2026-07-01T16:10:39.694199+00:00",
   "latest_time": "2026-07-02 01:00",
-  "latest_close": 70070.0,
+  "latest_close": 70065.0,
   "signal": "様子見",
   "score": 0,
   "reasons": [],
@@ -1497,15 +1497,15 @@
       "open": 70085.0,
       "high": 70090.0,
       "low": 70065.0,
-      "close": 70070.0,
-      "ma5": 70124.0,
-      "ma25": 70171.6,
-      "rsi": 50.8,
-      "macd": -65.48,
-      "macd_signal": -78.73,
-      "macd_hist": 13.25,
+      "close": 70065.0,
+      "ma5": 70123.0,
+      "ma25": 70171.4,
+      "rsi": 50.5,
+      "macd": -65.88,
+      "macd_signal": -78.81,
+      "macd_hist": 12.93,
       "bb_upper": 70336.63,
-      "bb_lower": 69902.37
+      "bb_lower": 69901.87
     }
   ],
   "data_source": "NIY=F"
