@@ -26,6 +26,7 @@ from datetime import datetime, timezone, timedelta
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
 
+
 def debug_check_intervals():
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=2)
@@ -38,7 +39,6 @@ def debug_check_intervals():
             print(f"デバッグ確認: interval={test_interval} エラー={e}")
 
 
-def fetch_data(period="5d", interval="5m"):
 def fetch_data(period="5d", interval="5m"):
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=5)
@@ -213,13 +213,12 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
 def main():
     webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
 
+    debug_check_intervals()
+
     df, ticker = fetch_data(period="5d", interval="5m")
     df = add_indicators(df)
     df = df.dropna()
-debug_check_intervals()
-    if len(df) < 2:
-        print("データが不足しています。")
-        sys.exit(0)
+
     if len(df) < 2:
         print("データが不足しています。")
         sys.exit(0)
