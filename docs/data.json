@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-07-03T11:01:01.980279+00:00",
+  "updated_at": "2026-07-03T11:20:48.297009+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
-  "signal": "hold",
+  "signal": "様子見",
   "score": 0,
   "reasons": [],
   "stop_price": null,
