@@ -32,15 +32,15 @@ def fetch_data(period="5d", interval="5m"):
     start = end - timedelta(days=5)
     for ticker in ("NIY=F", "^N225"):
         try:
-            df = yf.download(
-                ticker,
+            df = yf.Ticker(ticker).history(
                 start=start,
                 end=end,
                 interval=interval,
-                progress=False,
                 auto_adjust=False,
             )
-        except Exception:
+            print(f"デバッグ: {ticker} 取得件数={len(df) if df is not None else 0}, 最終行={df.tail(1) if df is not None and not df.empty else 'なし'}")
+        except Exception as e:
+            print(f"デバッグ: {ticker} 取得失敗 - {e}")
             df = None
         if df is not None and not df.empty:
             if isinstance(df.columns, pd.MultiIndex):
