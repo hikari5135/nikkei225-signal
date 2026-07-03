@@ -137,12 +137,12 @@ def judge_signal(row, prev_row):
         score -= 1
         reasons.append("Price >= Bollinger +2sigma (possible pullback)")
 
-    if score >= 3:
-        signal = "buy"
+   if score >= 3:
+        signal = "買い"
     elif score <= -3:
-        signal = "sell"
+        signal = "売り"
     else:
-        signal = "hold"
+        signal = "様子見"
 
     return signal, score, reasons
 
