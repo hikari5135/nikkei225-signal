@@ -21,16 +21,25 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
 
 
 def fetch_data(period="5d", interval="5m"):
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=5)
     for ticker in ("NIY=F", "^N225"):
         try:
-            df = yf.download(ticker, period=period, interval=interval, progress=False)
+            df = yf.download(
+                ticker,
+                start=start,
+                end=end,
+                interval=interval,
+                progress=False,
+                auto_adjust=False,
+            )
         except Exception:
             df = None
         if df is not None and not df.empty:
