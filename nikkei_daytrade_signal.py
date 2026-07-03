@@ -26,7 +26,19 @@ from datetime import datetime, timezone, timedelta
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
 
+def debug_check_intervals():
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=2)
+    for test_interval in ("1m", "5m", "15m"):
+        try:
+            d = yf.Ticker("NIY=F").history(start=start, end=end, interval=test_interval)
+            last_time = d.index[-1] if d is not None and not d.empty else "データなし"
+            print(f"デバッグ確認: interval={test_interval} 件数={len(d) if d is not None else 0} 最終時刻={last_time}")
+        except Exception as e:
+            print(f"デバッグ確認: interval={test_interval} エラー={e}")
 
+
+def fetch_data(period="5d", interval="5m"):
 def fetch_data(period="5d", interval="5m"):
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=5)
@@ -204,7 +216,10 @@ def main():
     df, ticker = fetch_data(period="5d", interval="5m")
     df = add_indicators(df)
     df = df.dropna()
-
+debug_check_intervals()
+    if len(df) < 2:
+        print("データが不足しています。")
+        sys.exit(0)
     if len(df) < 2:
         print("データが不足しています。")
         sys.exit(0)
