@@ -39,9 +39,13 @@ def debug_check_intervals():
             print(f"デバッグ確認: interval={test_interval} エラー={e}")
 
 
+STALE_THRESHOLD_MINUTES = 60
+
+
 def fetch_data(period="5d", interval="5m"):
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=5)
+    candidates = []
     for ticker in ("NIY=F", "^N225"):
         try:
             df = yf.Ticker(ticker).history(
@@ -50,7 +54,6 @@ def fetch_data(period="5d", interval="5m"):
                 interval=interval,
                 auto_adjust=False,
             )
-            print(f"デバッグ: {ticker} 取得件数={len(df) if df is not None else 0}, 最終行={df.tail(1) if df is not None and not df.empty else 'なし'}")
         except Exception as e:
             print(f"デバッグ: {ticker} 取得失敗 - {e}")
             df = None
@@ -61,8 +64,18 @@ def fetch_data(period="5d", interval="5m"):
                 df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
             else:
                 df.index = df.index.tz_convert("Asia/Tokyo")
-            print(f"データ取得元: {ticker}")
-            return df, ticker
+            last_time = df.index[-1]
+            age_minutes = (datetime.now(timezone.utc).astimezone(last_time.tzinfo) - last_time).total_seconds() / 60
+            print(f"デバッグ: {ticker} 取得件数={len(df)}, 最終時刻={last_time}, 経過={age_minutes:.0f}分")
+            if age_minutes <= STALE_THRESHOLD_MINUTES:
+                print(f"データ取得元: {ticker} (鮮度良好)")
+                return df, ticker
+            candidates.append((age_minutes, df, ticker))
+    if candidates:
+        candidates.sort(key=lambda x: x[0])
+        age_minutes, df, ticker = candidates[0]
+        print(f"警告: 全銘柄のデータが{STALE_THRESHOLD_MINUTES}分以上古いため、最も新しい{ticker}(経過{age_minutes:.0f}分)を使用します。")
+        return df, ticker
     raise RuntimeError("データ取得に失敗しました。市場が開いていない、もしくはネットワーク接続を確認してください。")
 
 
