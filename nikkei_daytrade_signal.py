@@ -1,17 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-マイクロ日経225 デイトレード エントリー判断ツール (ダッシュボード対応版)
-========================================================================
-
-実行のたびに、最新のローソク足・指標・シグナルを docs/data.json に書き出します。
-これを docs/index.html (GitHub Pages) が読み込んでチャート表示します。
-あわせて、買い/売りシグナルが出た場合はSlackに通知します。
-
-【必要な環境変数】
-  SLACK_WEBHOOK_URL : SlackのIncoming Webhook URL (任意。無くても動作する)
-
-【必要ライブラリ】
-  pip install yfinance pandas numpy requests --break-system-packages
+Nikkei225 Daytrade Signal Tool
 """
 
 import os
@@ -33,10 +22,10 @@ def debug_check_intervals():
     for test_interval in ("1m", "5m", "15m"):
         try:
             d = yf.Ticker("NIY=F").history(start=start, end=end, interval=test_interval)
-            last_time = d.index[-1] if d is not None and not d.empty else "データなし"
-            print(f"デバッグ確認: interval={test_interval} 件数={len(d) if d is not None else 0} 最終時刻={last_time}")
+            last_time = d.index[-1] if d is not None and not d.empty else "no data"
+            print(f"DEBUG interval={test_interval} count={len(d) if d is not None else 0} last_time={last_time}")
         except Exception as e:
-            print(f"デバッグ確認: interval={test_interval} エラー={e}")
+            print(f"DEBUG interval={test_interval} error={e}")
 
 
 STALE_THRESHOLD_MINUTES = 60
@@ -55,7 +44,7 @@ def fetch_data(period="5d", interval="5m"):
                 auto_adjust=False,
             )
         except Exception as e:
-            print(f"デバッグ: {ticker} 取得失敗 - {e}")
+            print(f"DEBUG {ticker} fetch failed - {e}")
             df = None
         if df is not None and not df.empty:
             if isinstance(df.columns, pd.MultiIndex):
@@ -66,17 +55,17 @@ def fetch_data(period="5d", interval="5m"):
                 df.index = df.index.tz_convert("Asia/Tokyo")
             last_time = df.index[-1]
             age_minutes = (datetime.now(timezone.utc).astimezone(last_time.tzinfo) - last_time).total_seconds() / 60
-            print(f"デバッグ: {ticker} 取得件数={len(df)}, 最終時刻={last_time}, 経過={age_minutes:.0f}分")
+            print(f"DEBUG {ticker} count={len(df)} last_time={last_time} age={age_minutes:.0f}min")
             if age_minutes <= STALE_THRESHOLD_MINUTES:
-                print(f"データ取得元: {ticker} (鮮度良好)")
+                print(f"DATA SOURCE: {ticker} (fresh)")
                 return df, ticker
             candidates.append((age_minutes, df, ticker))
     if candidates:
         candidates.sort(key=lambda x: x[0])
         age_minutes, df, ticker = candidates[0]
-        print(f"警告: 全銘柄のデータが{STALE_THRESHOLD_MINUTES}分以上古いため、最も新しい{ticker}(経過{age_minutes:.0f}分)を使用します。")
+        print(f"WARNING: all sources stale beyond {STALE_THRESHOLD_MINUTES}min, using freshest {ticker} (age {age_minutes:.0f}min)")
         return df, ticker
-    raise RuntimeError("データ取得に失敗しました。市場が開いていない、もしくはネットワーク接続を確認してください。")
+    raise RuntimeError("Failed to fetch data. Market may be closed or network issue.")
 
 
 def add_indicators(df):
@@ -122,66 +111,64 @@ def judge_signal(row, prev_row):
 
     if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
         score += 3
-        reasons.append("MA5がMA25を上抜け(ゴールデンクロス)")
+        reasons.append("MA5 crossed above MA25 (Golden Cross)")
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
         score -= 3
-        reasons.append("MA5がMA25を下抜け(デッドクロス)")
+        reasons.append("MA5 crossed below MA25 (Dead Cross)")
 
     if row["RSI"] < 30:
         score += 1.5
-        reasons.append(f"RSI={row['RSI']:.1f}(売られすぎ圏)")
+        reasons.append(f"RSI={row['RSI']:.1f} (oversold)")
     elif row["RSI"] > 70:
         score -= 1.5
-        reasons.append(f"RSI={row['RSI']:.1f}(買われすぎ圏)")
+        reasons.append(f"RSI={row['RSI']:.1f} (overbought)")
 
     if prev_row["MACD_hist"] <= 0 and row["MACD_hist"] > 0:
         score += 1.5
-        reasons.append("MACDヒストグラムがプラス転換")
+        reasons.append("MACD histogram turned positive")
     elif prev_row["MACD_hist"] >= 0 and row["MACD_hist"] < 0:
         score -= 1.5
-        reasons.append("MACDヒストグラムがマイナス転換")
+        reasons.append("MACD histogram turned negative")
 
     if row["Close"] <= row["BB_lower"]:
         score += 1
-        reasons.append("price <= ボリンジャーバンド-2σ(反発の可能性)")
+        reasons.append("Price <= Bollinger -2sigma (possible rebound)")
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
-        reasons.append("price >= ボリンジャーバンド+2σ(反落の可能性)")
+        reasons.append("Price >= Bollinger +2sigma (possible pullback)")
 
     if score >= 3:
-        signal = "買い"
+        signal = "buy"
     elif score <= -3:
-        signal = "売り"
+        signal = "sell"
     else:
-        signal = "様子見"
+        signal = "hold"
 
     return signal, score, reasons
 
 
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
-    """ATRベースの推奨損切りラインを計算する(参考値、判定には使わない)"""
     if atr is None or pd.isna(atr):
         return None
-    if signal == "買い":
+    if signal == "buy":
         return round(float(close_price - atr * atr_mult), 2)
-    elif signal == "売り":
+    elif signal == "sell":
         return round(float(close_price + atr * atr_mult), 2)
     return None
 
 
 def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
-    emoji = "🟢" if signal == "買い" else "🔴"
-    reasons_text = "\n".join(f"・{r}" for r in reasons)
-    stop_text = f"\n参考損切りライン(ATR×3): {stop_price:,.2f}" if stop_price else ""
+    emoji = "green" if signal == "buy" else "red"
+    reasons_text = "\n".join(f"- {r}" for r in reasons)
+    stop_text = f"\nStop loss (ATRx3): {stop_price:,.2f}" if stop_price else ""
     text = (
-        f"{emoji} *マイクロ日経225 シグナル: {signal}* (スコア: {score:+.1f})\n"
-        f"時刻: {timestamp}\n"
-        f"日経平均: {latest['Close']:.2f}\n"
+        f"[{emoji}] Nikkei225 Signal: {signal} (score: {score:+.1f})\n"
+        f"Time: {timestamp}\n"
+        f"Close: {latest['Close']:.2f}\n"
         f"MA5: {latest['MA5']:.2f} / MA25: {latest['MA25']:.2f}\n"
         f"RSI: {latest['RSI']:.1f}"
         f"{stop_text}\n"
-        f"\n根拠:\n{reasons_text}\n"
-        f"\n※テクニカル指標による参考情報です。投資判断は自己責任で行ってください。"
+        f"\nReasons:\n{reasons_text}\n"
     )
     resp = requests.post(webhook_url, json={"text": text}, timeout=10)
     resp.raise_for_status()
@@ -233,7 +220,7 @@ def main():
     df = df.dropna()
 
     if len(df) < 2:
-        print("データが不足しています。")
+        print("Not enough data.")
         sys.exit(0)
 
     latest = df.iloc[-1]
@@ -243,28 +230,28 @@ def main():
     signal, score, reasons = judge_signal(latest, prev)
     stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
 
-    print(f"[{timestamp}] 判定: {signal} (スコア: {score:+.1f})")
+    print(f"[{timestamp}] signal: {signal} (score: {score:+.1f})")
     for r in reasons:
         print(f"  - {r}")
     if stop_price:
-        print(f"  参考損切りライン(ATR×3): {stop_price:,.2f}")
+        print(f"  stop price (ATRx3): {stop_price:,.2f}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"データを書き出しました: {OUTPUT_PATH}")
+    print(f"data written: {OUTPUT_PATH}")
 
-    if signal == "様子見":
-        print("様子見のため通知はスキップします。")
+    if signal == "hold":
+        print("hold - skipping notification")
         return
 
     if not webhook_url:
-        print("警告: SLACK_WEBHOOK_URLが設定されていないため通知をスキップします。")
+        print("warning: SLACK_WEBHOOK_URL not set, skipping notification")
         return
 
     send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price)
-    print("Slackに通知しました。")
+    print("Slack notification sent.")
 
 
 if __name__ == "__main__":
