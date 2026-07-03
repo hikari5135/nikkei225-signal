@@ -137,7 +137,7 @@ def judge_signal(row, prev_row):
         score -= 1
         reasons.append("Price >= Bollinger +2sigma (possible pullback)")
 
-   if score >= 3:
+    if score >= 3:
         signal = "買い"
     elif score <= -3:
         signal = "売り"
@@ -150,15 +150,15 @@ def judge_signal(row, prev_row):
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
     if atr is None or pd.isna(atr):
         return None
-    if signal == "buy":
+    if signal == "買い":
         return round(float(close_price - atr * atr_mult), 2)
-    elif signal == "sell":
+    elif signal == "売り":
         return round(float(close_price + atr * atr_mult), 2)
     return None
 
 
 def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
-    emoji = "green" if signal == "buy" else "red"
+    emoji = "green" if signal == "買い" else "red"
     reasons_text = "\n".join(f"- {r}" for r in reasons)
     stop_text = f"\nStop loss (ATRx3): {stop_price:,.2f}" if stop_price else ""
     text = (
@@ -242,7 +242,7 @@ def main():
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
 
-    if signal == "hold":
+    if signal == "様子見":
         print("hold - skipping notification")
         return
 
