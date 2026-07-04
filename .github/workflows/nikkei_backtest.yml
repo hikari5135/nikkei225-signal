@@ -1,33 +1,25 @@
 name: Nikkei225 Backtest
-
 on:
   schedule:
-    schedule:
     # 毎日 1:00 UTC (日本時間10:00) に1回実行
     - cron: "0 1 * * *"
   workflow_dispatch: {}  # 手動実行用ボタン
-
 permissions:
   contents: write
-
 jobs:
   backtest:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install dependencies
         run: pip install yfinance pandas numpy
-
       - name: Run backtest
         run: python backtest.py
-
       - name: Commit updated backtest result
         run: |
           git config user.name "github-actions[bot]"
