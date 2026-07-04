@@ -320,6 +320,57 @@
   .signal-history-row .sh-signal.hold { color: var(--hold); }
   .no-position-note { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
 
+  .summary-banner {
+    background: linear-gradient(135deg, #eef4ff, #f7f9fc);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .summary-banner .summary-label {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .tf-box-signal.buy::before { content: "🟢 "; }
+  .tf-box-signal.sell::before { content: "🔴 "; }
+  .tf-box-signal.hold::before { content: "🟡 "; }
+
+  .breakdown-grid.emphasized { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); }
+  .breakdown-item { font-size: 12px; }
+  .breakdown-item .bd-value { font-size: 14px; }
+  .breakdown-total-box {
+    text-align: center;
+    padding: 14px 10px;
+    margin-bottom: 12px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    background: #f5f8ff;
+  }
+  .breakdown-total-box .bt-stars { font-size: 20px; letter-spacing: 3px; margin-bottom: 4px; }
+  .breakdown-total-box .bt-value { font-size: 28px; font-weight: 800; font-family: var(--mono); }
+  .breakdown-total-box .bt-value.pos { color: var(--buy); }
+  .breakdown-total-box .bt-value.neg { color: var(--sell); }
+  .breakdown-total-box .bt-value.zero { color: var(--muted); }
+  .breakdown-total-box .bt-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .stat-value.highlight { font-size: 24px; }
+
+  .position-current-price { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .position-sltp-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
+  .position-sltp-row .sltp-item { color: var(--muted); }
+  .position-sltp-row .sltp-item .sltp-value { font-weight: 700; font-family: var(--mono); }
+  .position-sltp-row .sltp-item.sl .sltp-value { color: var(--sell); }
+  .position-sltp-row .sltp-item.tp .sltp-value { color: var(--buy); }
+
   @media (max-width: 640px) {
     .chart-grid { grid-template-columns: 1fr; }
     .price { font-size: 22px; }
@@ -335,6 +386,8 @@
   </header>
 
   <div id="event-section"></div>
+
+  <div id="summary-section"></div>
 
   <div id="content">
     <div class="loading">データを読み込んでいます...</div>
@@ -383,6 +436,19 @@ async function loadDashboard() {
       eventSection.innerHTML = '';
     }
 
+    // 「今なぜこの判定なのか」サマリーバナー
+    const summarySection = document.getElementById('summary-section');
+    if (data.summary) {
+      summarySection.innerHTML = `
+        <div class="summary-banner">
+          <span class="summary-label">現在の判定理由</span>
+          ${data.summary}
+        </div>
+      `;
+    } else {
+      summarySection.innerHTML = '';
+    }
+
     // 複数時間軸判定カード(データがある場合のみ表示)
     let timeframeHtml = '';
     if (data.composite) {
@@ -420,7 +486,7 @@ async function loadDashboard() {
       `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
     ).join('');
 
-    // スコア内訳カード
+    // スコア内訳カード(合計を大きく強調)
     let breakdownHtml = '';
     if (data.score_breakdown && Object.keys(data.score_breakdown).length > 0) {
       const bd = data.score_breakdown;
@@ -435,15 +501,19 @@ async function loadDashboard() {
         `;
       }).join('');
       const totalCls = data.score > 0 ? 'pos' : data.score < 0 ? 'neg' : 'zero';
+      const totalStars = Array.from({length: 5}, (_, i) =>
+        `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
+      ).join('');
       breakdownHtml = `
         <div class="breakdown-card">
           <h2>スコア内訳</h2>
-          <div class="breakdown-grid">
+          <div class="breakdown-total-box">
+            <div class="bt-stars">${totalStars}</div>
+            <div class="bt-value ${totalCls}">${data.score > 0 ? '+' : ''}${data.score}</div>
+            <div class="bt-label">総合スコア(${data.star_label || ''})</div>
+          </div>
+          <div class="breakdown-grid emphasized">
             ${items}
-            <div class="breakdown-item total">
-              <div class="bd-label">合計</div>
-              <div class="bd-value ${totalCls}">${data.score > 0 ? '+' : ''}${data.score}</div>
-            </div>
           </div>
         </div>
       `;
@@ -465,6 +535,11 @@ async function loadDashboard() {
       `;
     }
 
+    // 判定根拠: イベント的な理由があればそれを、無ければ現在の指標状況を表示
+    const hasReasons = data.reasons && data.reasons.length > 0;
+    const reasonLines = hasReasons ? data.reasons : (data.current_state || []);
+    const reasonsTitle = hasReasons ? '判定根拠' : '現在の状況(様子見のため参考情報)';
+
     content.innerHTML = `
       <div class="signal-card ${signalClass}-card">
         <div class="signal-badge ${signalClass}">${data.signal}</div>
@@ -483,8 +558,8 @@ async function loadDashboard() {
       ${riskHtml}
 
       <div class="reasons">
-        <h2>判定根拠</h2>
-        <ul>${data.reasons.map(r => `<li>${r}</li>`).join('')}</ul>
+        <h2>${reasonsTitle}</h2>
+        <ul>${reasonLines.map(r => `<li>${r}</li>`).join('')}</ul>
       </div>
 
       <div class="chart-card">
@@ -703,6 +778,8 @@ async function loadBacktest() {
 
     const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
     const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
 
     section.innerHTML = `
       <div class="backtest-card">
@@ -711,12 +788,13 @@ async function loadBacktest() {
         ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
         <div class="backtest-stats">
           <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
-          <div class="stat-box"><div class="stat-value">${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}">${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
           <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
           <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
-          <div class="stat-box"><div class="stat-value ${expClass}">${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}">${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}">${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
         </div>
       </div>
     `;
@@ -876,9 +954,17 @@ function renderPositionUI() {
   if (pos) {
     const sideLabel = pos.side === 'buy' ? '買い' : '売り';
     const sideClass = pos.side === 'buy' ? 'buy' : 'sell';
+    const sltpRow = (pos.slAtEntry || pos.tpAtEntry || pos.rrAtEntry) ? `
+      <div class="position-sltp-row">
+        ${pos.slAtEntry ? `<div class="sltp-item sl">SL(参考): <span class="sltp-value">${pos.slAtEntry.toLocaleString()}</span></div>` : ''}
+        ${pos.tpAtEntry ? `<div class="sltp-item tp">TP(参考): <span class="sltp-value">${pos.tpAtEntry.toLocaleString()}</span></div>` : ''}
+        ${pos.rrAtEntry ? `<div class="sltp-item">RR(参考): <span class="sltp-value">1:${pos.rrAtEntry}</span></div>` : ''}
+      </div>
+    ` : '';
     section.innerHTML = `
       <div class="position-card">
         <h2>ポジション管理</h2>
+        ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
         <div class="position-active">
           <span class="position-side-badge ${sideClass}">${sideLabel}中</span>
           <div class="position-pnl-block">
@@ -890,6 +976,7 @@ function renderPositionUI() {
             時刻: ${pos.entryTime}
           </div>
         </div>
+        ${sltpRow}
         ${pos.memo ? `<div class="position-memo-display">${escapeHtml(pos.memo)}</div>` : ''}
         <div class="position-form-row" style="margin-top:12px;">
           <button class="position-btn danger" onclick="handleClosePosition()">ポジションを決済する</button>
@@ -902,6 +989,7 @@ function renderPositionUI() {
     section.innerHTML = `
       <div class="position-card">
         <h2>ポジション管理</h2>
+        ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
         <div class="no-position-note">現在記録中のポジションはありません。エントリーしたらこちらに記録しておくと、含み損益を自動計算できます(このブラウザ内にのみ保存されます)。</div>
         <div class="position-form">
           <div class="position-form-row">
@@ -930,7 +1018,12 @@ function handleOpenPosition() {
   const memo = document.getElementById('pos-memo').value;
   if (isNaN(price)) { alert('価格を入力してください'); return; }
   const now = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
-  setPosition({ side, entryPrice: price, entryTime: now, memo });
+  const latest = window._latestData;
+  // その時点でのシステムのSL/TP/RRをスナップショットとして保存(参考値)
+  const slAtEntry = latest && latest.stop_price ? latest.stop_price : null;
+  const tpAtEntry = latest && latest.take_profit ? latest.take_profit : null;
+  const rrAtEntry = latest && latest.risk_reward ? latest.risk_reward : null;
+  setPosition({ side, entryPrice: price, entryTime: now, memo, slAtEntry, tpAtEntry, rrAtEntry });
   renderPositionUI();
 }
 
@@ -957,7 +1050,6 @@ function updatePositionPnL(currentPrice) {
   el.textContent = (pnl > 0 ? '+' : '') + pnl.toFixed(2);
   el.className = 'position-pnl ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
 }
-
 </script>
 </body>
 </html>
