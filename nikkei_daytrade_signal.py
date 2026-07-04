@@ -189,6 +189,63 @@ def score_to_stars(score):
     return stars, label
 
 
+def describe_current_state(row):
+    """シグナルの有無にかかわらず、現在の各指標の状態を説明文にする"""
+    lines = []
+
+    if row["MA5"] > row["MA25"]:
+        lines.append(f"MA5({row['MA5']:.0f})がMA25({row['MA25']:.0f})を上回っており、短期は上昇基調")
+    else:
+        lines.append(f"MA5({row['MA5']:.0f})がMA25({row['MA25']:.0f})を下回っており、短期は下降基調")
+
+    rsi = row["RSI"]
+    if rsi >= 70:
+        lines.append(f"RSI={rsi:.1f}で過熱(買われすぎ)水準")
+    elif rsi <= 30:
+        lines.append(f"RSI={rsi:.1f}で売られすぎ水準")
+    else:
+        lines.append(f"RSI={rsi:.1f}で中立圏")
+
+    if row["MACD_hist"] > 0:
+        lines.append("MACDヒストグラムはプラス(上昇モメンタム)")
+    else:
+        lines.append("MACDヒストグラムはマイナス(下降モメンタム)")
+
+    if row["Close"] >= row["BB_upper"]:
+        lines.append("価格はボリンジャーバンド+2σ超で過熱気味")
+    elif row["Close"] <= row["BB_lower"]:
+        lines.append("価格はボリンジャーバンド-2σ未満で売られすぎ気味")
+    else:
+        lines.append("価格はボリンジャーバンドの通常レンジ内")
+
+    return lines
+
+
+def build_natural_summary(row, signal, composite, timeframes):
+    """「今なぜこの判定なのか」を一文で要約する"""
+    ma_trend = "上昇基調" if row["MA5"] > row["MA25"] else "下降基調"
+
+    rsi = row["RSI"]
+    if rsi >= 70:
+        rsi_note = f"RSI({rsi:.0f})が過熱気味"
+    elif rsi <= 30:
+        rsi_note = f"RSI({rsi:.0f})が売られすぎ水準"
+    else:
+        rsi_note = f"RSI({rsi:.0f})は中立圏"
+
+    macd_note = "MACDは上向き" if row["MACD_hist"] > 0 else "MACDは下向き"
+
+    tf_1h = timeframes.get("1h", {}).get("signal") if timeframes else None
+    tf_part = f" 1時間足では「{tf_1h}」。" if tf_1h else ""
+
+    composite_part = f" 複合判定は「{composite}」。" if composite else ""
+
+    return (
+        f"短期は{ma_trend}、{macd_note}、{rsi_note}のため「{signal}」と判定。"
+        f"{tf_part}{composite_part}"
+    )
+
+
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
     if atr is None or pd.isna(atr):
         return None
@@ -231,7 +288,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -266,6 +323,8 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "score_breakdown": breakdown or {},
         "stars": stars,
         "star_label": star_label,
+        "current_state": current_state or [],
+        "summary": summary,
         "candles": candles,
         "data_source": ticker,
         "timeframes": timeframes or {},
@@ -459,6 +518,7 @@ def main():
     stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
     take_profit = calc_take_profit(signal, latest["Close"], latest.get("ATR"))
     stars, star_label = score_to_stars(score)
+    current_state = describe_current_state(latest)
 
     print(f"[{timestamp}] signal: {signal} (score: {score:+.1f})")
     for r in reasons:
@@ -477,8 +537,11 @@ def main():
         for ev in economic_events["warning_events"]:
             print(f"  WARNING: economic event nearby - {ev['time']} {ev['label']}")
 
+    summary = build_natural_summary(latest, signal, composite, timeframes)
+    print(f"  summary: {summary}")
+
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
