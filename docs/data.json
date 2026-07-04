@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-04T04:01:02.661775+00:00",
+  "updated_at": "2026-07-04T04:10:48.791473+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
@@ -1527,5 +1527,36 @@
       "data_source": "NIY=F"
     }
   },
-  "composite": "買い優勢"
+  "composite": "買い優勢",
+  "economic_events": {
+    "upcoming_events": [
+      {
+        "time": "2026-07-30 03:00",
+        "label": "FOMC政策金利発表",
+        "hours_until": 635.6
+      },
+      {
+        "time": "2026-07-31 12:00",
+        "label": "日銀金融政策決定会合(結果発表・目安)",
+        "hours_until": 668.6
+      },
+      {
+        "time": "2026-08-07 21:30",
+        "label": "米雇用統計(NFP)",
+        "hours_until": 846.1
+      },
+      {
+        "time": "2026-09-04 21:30",
+        "label": "米雇用統計(NFP)",
+        "hours_until": 1518.1
+      },
+      {
+        "time": "2026-09-17 03:00",
+        "label": "FOMC政策金利発表",
+        "hours_until": 1811.6
+      }
+    ],
+    "warning": false,
+    "warning_events": []
+  }
 }
