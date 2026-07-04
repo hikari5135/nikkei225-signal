@@ -246,6 +246,57 @@ def build_natural_summary(row, signal, composite, timeframes):
     )
 
 
+MAX_POSSIBLE_SCORE = 7.0  # MA(3)+RSI(1.5)+MACD(1.5)+BB(1) の理論上の最大値
+
+
+def normalize_score(score):
+    """スコアを-100〜+100の範囲に正規化する"""
+    normalized = (score / MAX_POSSIBLE_SCORE) * 100
+    normalized = max(-100, min(100, normalized))
+    return round(normalized)
+
+
+def calc_stop_for_side(side, close_price, atr, atr_mult=3.0):
+    """指定した方向(buy/sell)を仮定した場合の損切りラインを計算する(現在のシグナルに関係なく計算)"""
+    if atr is None or pd.isna(atr):
+        return None
+    if side == "buy":
+        return round(float(close_price - atr * atr_mult), 2)
+    elif side == "sell":
+        return round(float(close_price + atr * atr_mult), 2)
+    return None
+
+
+def calc_tp_for_side(side, close_price, atr, atr_mult=3.0, rr=2.0):
+    """指定した方向(buy/sell)を仮定した場合の利確目標を計算する"""
+    if atr is None or pd.isna(atr):
+        return None
+    risk = atr * atr_mult
+    if side == "buy":
+        return round(float(close_price + risk * rr), 2)
+    elif side == "sell":
+        return round(float(close_price - risk * rr), 2)
+    return None
+
+
+def build_suggested_levels(close_price, atr):
+    """買い/売りそれぞれを仮定した場合の推奨レベル(Entry/SL/TP1/TP2/RR)"""
+    levels = {}
+    for side in ("buy", "sell"):
+        sl = calc_stop_for_side(side, close_price, atr)
+        tp1 = calc_tp_for_side(side, close_price, atr, rr=1.5)
+        tp2 = calc_tp_for_side(side, close_price, atr, rr=3.0)
+        levels[side] = {
+            "entry": round(float(close_price), 2),
+            "sl": sl,
+            "tp1": tp1,
+            "tp2": tp2,
+            "rr1": 1.5,
+            "rr2": 3.0,
+        }
+    return levels
+
+
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
     if atr is None or pd.isna(atr):
         return None
@@ -288,7 +339,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None, atr=None, suggested_levels=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -316,6 +367,7 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "latest_close": round(float(latest["Close"]), 2),
         "signal": signal,
         "score": score,
+        "score_normalized": normalize_score(score),
         "reasons": reasons,
         "stop_price": stop_price,
         "take_profit": take_profit,
@@ -325,6 +377,8 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "star_label": star_label,
         "current_state": current_state or [],
         "summary": summary,
+        "atr": None if atr is None or pd.isna(atr) else round(float(atr), 2),
+        "suggested_levels": suggested_levels or {},
         "candles": candles,
         "data_source": ticker,
         "timeframes": timeframes or {},
@@ -377,6 +431,7 @@ def get_timeframe_signal(label, interval, days):
             "label": label,
             "signal": signal,
             "score": score,
+            "score_normalized": normalize_score(score),
             "close": round(float(latest_row["Close"]), 2),
             "time": df.index[-1].strftime("%Y-%m-%d %H:%M"),
             "data_source": ticker,
@@ -540,8 +595,10 @@ def main():
     summary = build_natural_summary(latest, signal, composite, timeframes)
     print(f"  summary: {summary}")
 
+    suggested_levels = build_suggested_levels(latest["Close"], latest.get("ATR"))
+
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary, latest.get("ATR"), suggested_levels)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
