@@ -413,6 +413,17 @@
   .updated-dot.stale { background: #f0b400; }
   .updated-dot.old { background: var(--muted); }
 
+  .stars.neutral { font-size: 13px; color: var(--muted); font-style: italic; }
+  .stars .empty { color: #e8eaed; }
+  .stars .filled { color: #d99a00; }
+
+  .summary-banner {
+    font-weight: 500;
+  }
+  .summary-banner .summary-label { color: #2c4fa8; }
+
+  .bd-value.zero-dash { color: var(--muted); font-weight: 400; }
+
   @media (max-width: 640px) {
     .chart-grid { grid-template-columns: 1fr; }
     .price { font-size: 22px; }
@@ -529,11 +540,14 @@ async function loadDashboard() {
       `;
     }
 
-    // 星評価の表示用HTML
+    // 星評価の表示用HTML(様子見の時は星ではなく明示テキストにする)
     const starsCount = data.stars || 0;
-    const starsHtml = Array.from({length: 5}, (_, i) =>
-      `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
-    ).join('');
+    const isHold = data.signal === '様子見';
+    const starsHtml = isHold
+      ? `<span class="stars neutral">評価対象外(条件未達のため様子見)</span>`
+      : `<span class="stars">${Array.from({length: 5}, (_, i) =>
+          `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
+        ).join('')}<span class="star-label">${data.star_label || ''}</span></span>`;
 
     // スコア内訳カード(合計を大きく強調)
     let breakdownHtml = '';
@@ -541,23 +555,26 @@ async function loadDashboard() {
       const bd = data.score_breakdown;
       const labelMap = { MA: 'MA', RSI: 'RSI', MACD: 'MACD', BB: 'BB' };
       const items = Object.entries(bd).map(([key, val]) => {
-        const cls = val > 0 ? 'pos' : val < 0 ? 'neg' : 'zero';
+        const cls = val > 0 ? 'pos' : val < 0 ? 'neg' : 'zero-dash';
+        const displayVal = val === 0 ? '-' : (val > 0 ? '+' + val : val);
         return `
           <div class="breakdown-item">
             <div class="bd-label">${labelMap[key] || key}</div>
-            <div class="bd-value ${cls}">${val > 0 ? '+' : ''}${val}</div>
+            <div class="bd-value ${cls}">${displayVal}</div>
           </div>
         `;
       }).join('');
       const totalCls = data.score > 0 ? 'pos' : data.score < 0 ? 'neg' : 'zero';
-      const totalStars = Array.from({length: 5}, (_, i) =>
-        `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
-      ).join('');
+      const totalStarsHtml = isHold
+        ? `<div class="stars neutral">評価対象外(条件未達のため様子見)</div>`
+        : `<div class="bt-stars">${Array.from({length: 5}, (_, i) =>
+            `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
+          ).join('')}</div>`;
       breakdownHtml = `
         <div class="breakdown-card">
           <h2>スコア内訳</h2>
           <div class="breakdown-total-box">
-            <div class="bt-stars">${totalStars}</div>
+            ${totalStarsHtml}
             <div class="bt-value ${totalCls}">${data.score > 0 ? '+' : ''}${data.score}</div>
             <div class="bt-points">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点 / 100点</div>
             <div class="bt-label">総合スコア(${data.star_label || ''})</div>
@@ -606,7 +623,7 @@ async function loadDashboard() {
           <div class="price-time">${data.latest_time} 時点</div>
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
           <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
-          <div class="stars">${starsHtml}<span class="star-label">${data.star_label || ''}</span></div>
+          ${starsHtml}
         </div>
       </div>
 
