@@ -16,6 +16,9 @@ from datetime import datetime, timezone, timedelta
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
 HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "signal_history.jsonl")
 MAX_HISTORY_LINES = 20000  # 肥大化防止（5分間隔で約2ヶ月分）
+ECONOMIC_EVENTS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "economic_events.json")
+EVENT_WARNING_BEFORE_MINUTES = 60   # イベント発表の何分前から警告を出すか
+EVENT_WARNING_AFTER_MINUTES = 30    # イベント発表の何分後まで警告を続けるか
 
 
 def debug_check_intervals():
@@ -176,7 +179,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -210,6 +213,7 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "data_source": ticker,
         "timeframes": timeframes or {},
         "composite": composite,
+        "economic_events": economic_events or {"upcoming_events": [], "warning": False, "warning_events": []},
     }
     return data
 
@@ -294,6 +298,49 @@ def composite_judgement(main_signal, timeframes):
     return "方向感なし"
 
 
+def check_economic_events(now_jst):
+    """経済指標カレンダーを確認し、直前・直後の警告と今後のイベント一覧を返す"""
+    result = {"upcoming_events": [], "warning": False, "warning_events": []}
+
+    if not os.path.exists(ECONOMIC_EVENTS_PATH):
+        return result
+
+    try:
+        with open(ECONOMIC_EVENTS_PATH, "r", encoding="utf-8") as f:
+            events = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"DEBUG economic_events load failed: {e}")
+        return result
+
+    upcoming = []
+    warnings = []
+    for ev in events:
+        try:
+            ev_time = datetime.strptime(ev["time"], "%Y-%m-%d %H:%M")
+        except (KeyError, ValueError):
+            continue
+
+        diff_minutes = (ev_time - now_jst).total_seconds() / 60
+
+        # 直前(EVENT_WARNING_BEFORE_MINUTES分前)〜直後(EVENT_WARNING_AFTER_MINUTES分後)なら警告対象
+        if -EVENT_WARNING_AFTER_MINUTES <= diff_minutes <= EVENT_WARNING_BEFORE_MINUTES:
+            warnings.append({"time": ev["time"], "label": ev["label"]})
+
+        # 今後のイベントは一覧に含める(直近5件)
+        if diff_minutes >= -EVENT_WARNING_AFTER_MINUTES:
+            upcoming.append({
+                "time": ev["time"],
+                "label": ev["label"],
+                "hours_until": round(diff_minutes / 60, 1),
+            })
+
+    upcoming.sort(key=lambda e: e["hours_until"])
+    result["upcoming_events"] = upcoming[:5]
+    result["warning"] = len(warnings) > 0
+    result["warning_events"] = warnings
+    return result
+
+
 def append_history(latest, signal, score, timestamp, ticker):
     """毎回の実行結果を1行ずつ追記していく（バックテスト用の時系列データ）"""
     record = {
@@ -366,8 +413,13 @@ def main():
     for tf_key, tf_val in timeframes.items():
         print(f"  [{tf_val.get('label', tf_key)}] signal={tf_val.get('signal')} score={tf_val.get('score')}")
 
+    economic_events = check_economic_events(df.index[-1].to_pydatetime().replace(tzinfo=None))
+    if economic_events["warning"]:
+        for ev in economic_events["warning_events"]:
+            print(f"  WARNING: economic event nearby - {ev['time']} {ev['label']}")
+
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
