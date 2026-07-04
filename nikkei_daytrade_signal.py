@@ -176,7 +176,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -208,8 +208,90 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
         "stop_price": stop_price,
         "candles": candles,
         "data_source": ticker,
+        "timeframes": timeframes or {},
+        "composite": composite,
     }
     return data
+
+
+def fetch_timeframe_data(interval, days, tickers=("NIY=F", "^N225")):
+    """指定した時間軸のデータを取得する(マルチタイムフレーム判定用)"""
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=days)
+    for ticker in tickers:
+        try:
+            df = yf.Ticker(ticker).history(
+                start=start,
+                end=end,
+                interval=interval,
+                auto_adjust=False,
+            )
+        except Exception as e:
+            print(f"DEBUG multi-tf {ticker} {interval} fetch failed - {e}")
+            df = None
+        if df is not None and not df.empty:
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+            if df.index.tz is None:
+                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
+            else:
+                df.index = df.index.tz_convert("Asia/Tokyo")
+            return df, ticker
+    return None, None
+
+
+def get_timeframe_signal(label, interval, days):
+    """指定した時間軸の最新シグナルを算出する"""
+    try:
+        df, ticker = fetch_timeframe_data(interval, days)
+        if df is None:
+            return {"label": label, "signal": None, "score": None, "error": "data unavailable"}
+        df = add_indicators(df)
+        df = df.dropna()
+        if len(df) < 2:
+            return {"label": label, "signal": None, "score": None, "error": "not enough data"}
+        latest_row = df.iloc[-1]
+        prev_row = df.iloc[-2]
+        signal, score, _reasons = judge_signal(latest_row, prev_row)
+        return {
+            "label": label,
+            "signal": signal,
+            "score": score,
+            "close": round(float(latest_row["Close"]), 2),
+            "time": df.index[-1].strftime("%Y-%m-%d %H:%M"),
+            "data_source": ticker,
+        }
+    except Exception as e:
+        print(f"DEBUG multi-tf {label} error: {e}")
+        return {"label": label, "signal": None, "score": None, "error": str(e)}
+
+
+def build_multi_timeframe():
+    """5分足・15分足・1時間足の3つを取得して辞書にまとめる"""
+    return {
+        "15m": get_timeframe_signal("15分足", "15m", days=10),
+        "1h": get_timeframe_signal("1時間足", "60m", days=30),
+    }
+
+
+def composite_judgement(main_signal, timeframes):
+    """メイン(5分足)＋他時間軸を合わせた総合判定"""
+    signals = [main_signal] + [tf["signal"] for tf in timeframes.values() if tf.get("signal")]
+    buy_count = signals.count("買い")
+    sell_count = signals.count("売り")
+    total = len(signals)
+
+    if total == 0:
+        return "判定不可"
+    if buy_count == total and total > 1:
+        return "全時間軸一致(買い)"
+    if sell_count == total and total > 1:
+        return "全時間軸一致(売り)"
+    if buy_count > sell_count:
+        return "買い優勢"
+    if sell_count > buy_count:
+        return "売り優勢"
+    return "方向感なし"
 
 
 def append_history(latest, signal, score, timestamp, ticker):
@@ -278,8 +360,14 @@ def main():
     if stop_price:
         print(f"  stop price (ATRx3): {stop_price:,.2f}")
 
+    timeframes = build_multi_timeframe()
+    composite = composite_judgement(signal, timeframes)
+    print(f"  composite (5m+15m+1h): {composite}")
+    for tf_key, tf_val in timeframes.items():
+        print(f"  [{tf_val.get('label', tf_key)}] signal={tf_val.get('signal')} score={tf_val.get('score')}")
+
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
