@@ -1,0 +1,15 @@
+[
+  {"time": "2026-07-30 03:00", "label": "FOMC政策金利発表", "importance": "high"},
+  {"time": "2026-07-31 12:00", "label": "日銀金融政策決定会合(結果発表・目安)", "importance": "high"},
+  {"time": "2026-08-07 21:30", "label": "米雇用統計(NFP)", "importance": "high"},
+  {"time": "2026-09-04 21:30", "label": "米雇用統計(NFP)", "importance": "high"},
+  {"time": "2026-09-17 03:00", "label": "FOMC政策金利発表", "importance": "high"},
+  {"time": "2026-09-18 12:00", "label": "日銀金融政策決定会合(結果発表・目安)", "importance": "high"},
+  {"time": "2026-10-02 21:30", "label": "米雇用統計(NFP)", "importance": "high"},
+  {"time": "2026-10-29 03:00", "label": "FOMC政策金利発表", "importance": "high"},
+  {"time": "2026-10-30 12:00", "label": "日銀金融政策決定会合(結果発表・目安)", "importance": "high"},
+  {"time": "2026-11-06 22:30", "label": "米雇用統計(NFP)", "importance": "high"},
+  {"time": "2026-12-04 22:30", "label": "米雇用統計(NFP)", "importance": "high"},
+  {"time": "2026-12-10 04:00", "label": "FOMC政策金利発表", "importance": "high"},
+  {"time": "2026-12-18 12:00", "label": "日銀金融政策決定会合(結果発表・目安)", "importance": "high"}
+]
