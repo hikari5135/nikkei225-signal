@@ -2,8 +2,9 @@ name: Nikkei225 Backtest
 
 on:
   schedule:
-    # 毎週日曜 1:00 UTC (日本時間10:00) に1回実行
-    - cron: "0 1 * * 0"
+    schedule:
+    # 毎日 1:00 UTC (日本時間10:00) に1回実行
+    - cron: "0 1 * * *"
   workflow_dispatch: {}  # 手動実行用ボタン
 
 permissions:
