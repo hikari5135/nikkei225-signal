@@ -1,11 +1,21 @@
 {
-  "updated_at": "2026-07-04T04:50:45.206486+00:00",
+  "updated_at": "2026-07-04T05:01:02.543199+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
   "score": 0,
   "reasons": [],
   "stop_price": null,
+  "take_profit": null,
+  "risk_reward": null,
+  "score_breakdown": {
+    "MA": 0,
+    "RSI": 0,
+    "MACD": 0,
+    "BB": 0
+  },
+  "stars": 1,
+  "star_label": "様子見",
   "candles": [
     {
       "time": "2026-07-02 12:50",
