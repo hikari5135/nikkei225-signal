@@ -1,24 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-マイクロ日経225 デイトレシグナル バックテストツール
-======================================================
-
-nikkei_daytrade_signal.py と全く同じシグナル判定ロジックを過去データに適用し、
-「もしこのシグナル通りに売買していたらどうなっていたか」を検証します。
-
-ルール:
-- 「買い」シグナルが出たらロングを建てる(ショートを保有していれば決済してドテン)
-- 「売り」シグナルが出たらショートを建てる(ロングを保有していれば決済してドテン)
-- 「様子見」では何もしない(ポジションがあればそのまま保有を続ける)
-- 最後まで残ったポジションはデータの最終足で強制決済する
-
-注意:
-- スプレッド・手数料・スリッページは考慮していません(理論上の数値です)
-- 5分足はyfinanceの制限により直近60日分程度しか取得できません
-- 過去の成績は将来の成績を保証するものではありません
-
-【必要ライブラリ】
-  pip install yfinance pandas numpy --break-system-packages
+Nikkei225 Daytrade Signal Tool
 """
 
 import os
@@ -27,17 +9,47 @@ import json
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import datetime, timezone
+import requests
+from datetime import datetime, timezone, timedelta
 
 
-OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "backtest.json")
+OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
+HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "signal_history.jsonl")
+MAX_HISTORY_LINES = 20000  # 肥大化防止（5分間隔で約2ヶ月分）
+ECONOMIC_EVENTS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "economic_events.json")
+EVENT_WARNING_BEFORE_MINUTES = 60   # イベント発表の何分前から警告を出すか
+EVENT_WARNING_AFTER_MINUTES = 30    # イベント発表の何分後まで警告を続けるか
 
 
-def fetch_data(period="60d", interval="5m"):
+def debug_check_intervals():
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=2)
+    for test_interval in ("1m", "5m", "15m"):
+        try:
+            d = yf.Ticker("NIY=F").history(start=start, end=end, interval=test_interval)
+            last_time = d.index[-1] if d is not None and not d.empty else "no data"
+            print(f"DEBUG interval={test_interval} count={len(d) if d is not None else 0} last_time={last_time}")
+        except Exception as e:
+            print(f"DEBUG interval={test_interval} error={e}")
+
+
+STALE_THRESHOLD_MINUTES = 60
+
+
+def fetch_data(period="5d", interval="5m"):
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=5)
+    candidates = []
     for ticker in ("NIY=F", "^N225"):
         try:
-            df = yf.download(ticker, period=period, interval=interval, progress=False)
-        except Exception:
+            df = yf.Ticker(ticker).history(
+                start=start,
+                end=end,
+                interval=interval,
+                auto_adjust=False,
+            )
+        except Exception as e:
+            print(f"DEBUG {ticker} fetch failed - {e}")
             df = None
         if df is not None and not df.empty:
             if isinstance(df.columns, pd.MultiIndex):
@@ -46,9 +58,19 @@ def fetch_data(period="60d", interval="5m"):
                 df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
             else:
                 df.index = df.index.tz_convert("Asia/Tokyo")
-            print(f"データ取得元: {ticker} ({len(df)}本)")
-            return df, ticker
-    raise RuntimeError("データ取得に失敗しました。")
+            last_time = df.index[-1]
+            age_minutes = (datetime.now(timezone.utc).astimezone(last_time.tzinfo) - last_time).total_seconds() / 60
+            print(f"DEBUG {ticker} count={len(df)} last_time={last_time} age={age_minutes:.0f}min")
+            if age_minutes <= STALE_THRESHOLD_MINUTES:
+                print(f"DATA SOURCE: {ticker} (fresh)")
+                return df, ticker
+            candidates.append((age_minutes, df, ticker))
+    if candidates:
+        candidates.sort(key=lambda x: x[0])
+        age_minutes, df, ticker = candidates[0]
+        print(f"WARNING: all sources stale beyond {STALE_THRESHOLD_MINUTES}min, using freshest {ticker} (age {age_minutes:.0f}min)")
+        return df, ticker
+    raise RuntimeError("Failed to fetch data. Market may be closed or network issue.")
 
 
 def add_indicators(df):
@@ -89,151 +111,390 @@ def add_indicators(df):
 
 
 def judge_signal(row, prev_row):
-    """nikkei_daytrade_signal.py と同一ロジック"""
     score = 0
+    reasons = []
+    breakdown = {"MA": 0, "RSI": 0, "MACD": 0, "BB": 0}
 
     if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
         score += 3
+        breakdown["MA"] = 3
+        reasons.append("MA5 crossed above MA25 (Golden Cross)")
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
         score -= 3
+        breakdown["MA"] = -3
+        reasons.append("MA5 crossed below MA25 (Dead Cross)")
 
     if row["RSI"] < 30:
         score += 1.5
+        breakdown["RSI"] = 1.5
+        reasons.append(f"RSI={row['RSI']:.1f} (oversold)")
     elif row["RSI"] > 70:
         score -= 1.5
+        breakdown["RSI"] = -1.5
+        reasons.append(f"RSI={row['RSI']:.1f} (overbought)")
 
     if prev_row["MACD_hist"] <= 0 and row["MACD_hist"] > 0:
         score += 1.5
+        breakdown["MACD"] = 1.5
+        reasons.append("MACD histogram turned positive")
     elif prev_row["MACD_hist"] >= 0 and row["MACD_hist"] < 0:
         score -= 1.5
+        breakdown["MACD"] = -1.5
+        reasons.append("MACD histogram turned negative")
 
     if row["Close"] <= row["BB_lower"]:
         score += 1
+        breakdown["BB"] = 1
+        reasons.append("Price <= Bollinger -2sigma (possible rebound)")
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
+        breakdown["BB"] = -1
+        reasons.append("Price >= Bollinger +2sigma (possible pullback)")
 
     if score >= 3:
-        return "買い"
+        signal = "買い"
     elif score <= -3:
-        return "売り"
-    return "様子見"
+        signal = "売り"
+    else:
+        signal = "様子見"
+
+    return signal, score, reasons, breakdown
 
 
-def run_backtest(df):
-    """シグナルに従って売買をシミュレーションする"""
-    trades = []
-    position = None
+def score_to_stars(score):
+    """スコアを5段階の星評価に変換する"""
+    abs_score = abs(score)
+    if abs_score >= 6:
+        stars = 5
+    elif abs_score >= 4.5:
+        stars = 4
+    elif abs_score >= 3:
+        stars = 3
+    elif abs_score >= 1.5:
+        stars = 2
+    else:
+        stars = 1
 
-    rows = df.to_dict("records")
-    times = df.index.tolist()
+    if score >= 3:
+        label = "強い買い" if stars >= 4 else "買い"
+    elif score <= -3:
+        label = "強い売り" if stars >= 4 else "売り"
+    elif score > 0:
+        label = "弱い買い"
+    elif score < 0:
+        label = "弱い売り"
+    else:
+        label = "様子見"
 
-    for i in range(1, len(rows)):
-        row = rows[i]
-        prev_row = rows[i - 1]
-        signal = judge_signal(row, prev_row)
-        price = row["Close"]
-        time_str = times[i].strftime("%Y-%m-%d %H:%M")
-
-        if signal == "買い":
-            if position and position["side"] == "short":
-                pnl = position["entry_price"] - price
-                trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
-                position = None
-            if position is None:
-                position = {"side": "long", "entry_price": price, "entry_time": time_str}
-
-        elif signal == "売り":
-            if position and position["side"] == "long":
-                pnl = price - position["entry_price"]
-                trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
-                position = None
-            if position is None:
-                position = {"side": "short", "entry_price": price, "entry_time": time_str}
-
-    if position:
-        last_price = rows[-1]["Close"]
-        last_time = times[-1].strftime("%Y-%m-%d %H:%M")
-        if position["side"] == "long":
-            pnl = last_price - position["entry_price"]
-        else:
-            pnl = position["entry_price"] - last_price
-        trades.append({**position, "exit_price": last_price, "exit_time": last_time, "pnl": pnl, "forced_exit": True})
-
-    return trades
+    return stars, label
 
 
-def summarize(trades):
-    if not trades:
-        return {
-            "total_trades": 0,
-            "win_rate": 0,
-            "total_pnl": 0,
-            "avg_win": 0,
-            "avg_loss": 0,
-            "max_win": 0,
-            "max_loss": 0,
-            "max_drawdown": 0,
-        }
+def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
+    if atr is None or pd.isna(atr):
+        return None
+    if signal == "買い":
+        return round(float(close_price - atr * atr_mult), 2)
+    elif signal == "売り":
+        return round(float(close_price + atr * atr_mult), 2)
+    return None
 
-    pnls = [t["pnl"] for t in trades]
-    wins = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p <= 0]
 
-    cum = np.cumsum(pnls)
-    peak = np.maximum.accumulate(cum)
-    drawdown = cum - peak
-    max_dd = float(drawdown.min()) if len(drawdown) else 0
+DEFAULT_RR = 2.0  # リスクリワード比率(デフォルト1:2)
 
-    return {
-        "total_trades": len(trades),
-        "win_trades": len(wins),
-        "lose_trades": len(losses),
-        "stop_loss_trades": sum(1 for t in trades if t.get("stop_loss")),
-        "win_rate": round(len(wins) / len(trades) * 100, 1) if trades else 0,
-        "total_pnl": round(float(sum(pnls)), 2),
-        "avg_win": round(float(np.mean(wins)), 2) if wins else 0,
-        "avg_loss": round(float(np.mean(losses)), 2) if losses else 0,
-        "max_win": round(float(max(pnls)), 2),
-        "max_loss": round(float(min(pnls)), 2),
-        "max_drawdown": round(max_dd, 2),
+
+def calc_take_profit(signal, close_price, atr, atr_mult=3.0, rr=DEFAULT_RR):
+    """ATRベースの損切り幅(risk)にRR倍した値を利確目標(reward)とする"""
+    if atr is None or pd.isna(atr):
+        return None
+    risk = atr * atr_mult
+    if signal == "買い":
+        return round(float(close_price + risk * rr), 2)
+    elif signal == "売り":
+        return round(float(close_price - risk * rr), 2)
+    return None
+
+
+def send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price):
+    emoji = "green" if signal == "買い" else "red"
+    reasons_text = "\n".join(f"- {r}" for r in reasons)
+    stop_text = f"\nStop loss (ATRx3): {stop_price:,.2f}" if stop_price else ""
+    text = (
+        f"[{emoji}] Nikkei225 Signal: {signal} (score: {score:+.1f})\n"
+        f"Time: {timestamp}\n"
+        f"Close: {latest['Close']:.2f}\n"
+        f"MA5: {latest['MA5']:.2f} / MA25: {latest['MA25']:.2f}\n"
+        f"RSI: {latest['RSI']:.1f}"
+        f"{stop_text}\n"
+        f"\nReasons:\n{reasons_text}\n"
+    )
+    resp = requests.post(webhook_url, json={"text": text}, timeout=10)
+    resp.raise_for_status()
+
+
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None):
+    recent = df.tail(100).copy()
+    candles = []
+    for ts, row in recent.iterrows():
+        candles.append({
+            "time": ts.strftime("%Y-%m-%d %H:%M"),
+            "open": round(float(row["Open"]), 2),
+            "high": round(float(row["High"]), 2),
+            "low": round(float(row["Low"]), 2),
+            "close": round(float(row["Close"]), 2),
+            "ma5": None if pd.isna(row["MA5"]) else round(float(row["MA5"]), 2),
+            "ma25": None if pd.isna(row["MA25"]) else round(float(row["MA25"]), 2),
+            "rsi": None if pd.isna(row["RSI"]) else round(float(row["RSI"]), 1),
+            "macd": None if pd.isna(row["MACD"]) else round(float(row["MACD"]), 2),
+            "macd_signal": None if pd.isna(row["MACD_signal"]) else round(float(row["MACD_signal"]), 2),
+            "macd_hist": None if pd.isna(row["MACD_hist"]) else round(float(row["MACD_hist"]), 2),
+            "bb_upper": None if pd.isna(row["BB_upper"]) else round(float(row["BB_upper"]), 2),
+            "bb_lower": None if pd.isna(row["BB_lower"]) else round(float(row["BB_lower"]), 2),
+        })
+
+    latest = df.iloc[-1]
+
+    data = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "latest_time": timestamp,
+        "latest_close": round(float(latest["Close"]), 2),
+        "signal": signal,
+        "score": score,
+        "reasons": reasons,
+        "stop_price": stop_price,
+        "take_profit": take_profit,
+        "risk_reward": DEFAULT_RR if (stop_price is not None and take_profit is not None) else None,
+        "score_breakdown": breakdown or {},
+        "stars": stars,
+        "star_label": star_label,
+        "candles": candles,
+        "data_source": ticker,
+        "timeframes": timeframes or {},
+        "composite": composite,
+        "economic_events": economic_events or {"upcoming_events": [], "warning": False, "warning_events": []},
     }
+    return data
+
+
+def fetch_timeframe_data(interval, days, tickers=("NIY=F", "^N225")):
+    """指定した時間軸のデータを取得する(マルチタイムフレーム判定用)"""
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=days)
+    for ticker in tickers:
+        try:
+            df = yf.Ticker(ticker).history(
+                start=start,
+                end=end,
+                interval=interval,
+                auto_adjust=False,
+            )
+        except Exception as e:
+            print(f"DEBUG multi-tf {ticker} {interval} fetch failed - {e}")
+            df = None
+        if df is not None and not df.empty:
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+            if df.index.tz is None:
+                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
+            else:
+                df.index = df.index.tz_convert("Asia/Tokyo")
+            return df, ticker
+    return None, None
+
+
+def get_timeframe_signal(label, interval, days):
+    """指定した時間軸の最新シグナルを算出する"""
+    try:
+        df, ticker = fetch_timeframe_data(interval, days)
+        if df is None:
+            return {"label": label, "signal": None, "score": None, "error": "data unavailable"}
+        df = add_indicators(df)
+        df = df.dropna()
+        if len(df) < 2:
+            return {"label": label, "signal": None, "score": None, "error": "not enough data"}
+        latest_row = df.iloc[-1]
+        prev_row = df.iloc[-2]
+        signal, score, _reasons, _breakdown = judge_signal(latest_row, prev_row)
+        return {
+            "label": label,
+            "signal": signal,
+            "score": score,
+            "close": round(float(latest_row["Close"]), 2),
+            "time": df.index[-1].strftime("%Y-%m-%d %H:%M"),
+            "data_source": ticker,
+        }
+    except Exception as e:
+        print(f"DEBUG multi-tf {label} error: {e}")
+        return {"label": label, "signal": None, "score": None, "error": str(e)}
+
+
+def build_multi_timeframe():
+    """5分足・15分足・1時間足の3つを取得して辞書にまとめる"""
+    return {
+        "15m": get_timeframe_signal("15分足", "15m", days=10),
+        "1h": get_timeframe_signal("1時間足", "60m", days=30),
+    }
+
+
+def composite_judgement(main_signal, timeframes):
+    """メイン(5分足)＋他時間軸を合わせた総合判定"""
+    signals = [main_signal] + [tf["signal"] for tf in timeframes.values() if tf.get("signal")]
+    buy_count = signals.count("買い")
+    sell_count = signals.count("売り")
+    total = len(signals)
+
+    if total == 0:
+        return "判定不可"
+    if buy_count == total and total > 1:
+        return "全時間軸一致(買い)"
+    if sell_count == total and total > 1:
+        return "全時間軸一致(売り)"
+    if buy_count > sell_count:
+        return "買い優勢"
+    if sell_count > buy_count:
+        return "売り優勢"
+    return "方向感なし"
+
+
+def check_economic_events(now_jst):
+    """経済指標カレンダーを確認し、直前・直後の警告と今後のイベント一覧を返す"""
+    result = {"upcoming_events": [], "warning": False, "warning_events": []}
+
+    if not os.path.exists(ECONOMIC_EVENTS_PATH):
+        return result
+
+    try:
+        with open(ECONOMIC_EVENTS_PATH, "r", encoding="utf-8") as f:
+            events = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"DEBUG economic_events load failed: {e}")
+        return result
+
+    upcoming = []
+    warnings = []
+    for ev in events:
+        try:
+            ev_time = datetime.strptime(ev["time"], "%Y-%m-%d %H:%M")
+        except (KeyError, ValueError):
+            continue
+
+        diff_minutes = (ev_time - now_jst).total_seconds() / 60
+
+        # 直前(EVENT_WARNING_BEFORE_MINUTES分前)〜直後(EVENT_WARNING_AFTER_MINUTES分後)なら警告対象
+        if -EVENT_WARNING_AFTER_MINUTES <= diff_minutes <= EVENT_WARNING_BEFORE_MINUTES:
+            warnings.append({"time": ev["time"], "label": ev["label"]})
+
+        # 今後のイベントは一覧に含める(直近5件)
+        if diff_minutes >= -EVENT_WARNING_AFTER_MINUTES:
+            upcoming.append({
+                "time": ev["time"],
+                "label": ev["label"],
+                "hours_until": round(diff_minutes / 60, 1),
+            })
+
+    upcoming.sort(key=lambda e: e["hours_until"])
+    result["upcoming_events"] = upcoming[:5]
+    result["warning"] = len(warnings) > 0
+    result["warning_events"] = warnings
+    return result
+
+
+def append_history(latest, signal, score, timestamp, ticker):
+    """毎回の実行結果を1行ずつ追記していく（バックテスト用の時系列データ）"""
+    record = {
+        "time": timestamp,
+        "close": round(float(latest["Close"]), 2),
+        "signal": signal,
+        "score": score,
+        "atr": None if pd.isna(latest.get("ATR")) else round(float(latest["ATR"]), 2),
+    }
+
+    os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
+
+    if os.path.exists(HISTORY_PATH):
+        with open(HISTORY_PATH, "rb") as f:
+            try:
+                f.seek(-200, os.SEEK_END)
+            except OSError:
+                f.seek(0)
+            last_line = f.readlines()[-1].decode("utf-8", errors="ignore").strip()
+        if last_line:
+            try:
+                last_record = json.loads(last_line)
+                if last_record.get("time") == timestamp:
+                    print(f"history: {timestamp} already logged, skip")
+                    return
+            except json.JSONDecodeError:
+                pass
+
+    with open(HISTORY_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    if len(lines) > MAX_HISTORY_LINES:
+        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+            f.writelines(lines[-MAX_HISTORY_LINES:])
+
+    print(f"history appended: {timestamp} ({len(lines)} lines)")
 
 
 def main():
-    df, ticker = fetch_data(period="60d", interval="5m")
+    webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+
+    debug_check_intervals()
+
+    df, ticker = fetch_data(period="5d", interval="5m")
     df = add_indicators(df)
     df = df.dropna()
 
-    if len(df) < 30:
-        print("データが不足しています。")
+    if len(df) < 2:
+        print("Not enough data.")
         sys.exit(0)
 
-    trades = run_backtest(df)
-    summary = summarize(trades)
+    latest = df.iloc[-1]
+    prev = df.iloc[-2]
+    timestamp = df.index[-1].strftime("%Y-%m-%d %H:%M")
 
-    print("=" * 50)
-    print(f"バックテスト結果 (データ元: {ticker}, 期間: {df.index[0]} 〜 {df.index[-1]})")
-    print("=" * 50)
-    print(f"総トレード数: {summary['total_trades']}")
-    print(f"勝率: {summary['win_rate']}% ({summary.get('win_trades', 0)}勝{summary.get('lose_trades', 0)}敗)")
-    print(f"累計損益: {summary['total_pnl']:+.2f} 円(指数ポイント)")
-    print(f"平均利益: {summary['avg_win']:+.2f} / 平均損失: {summary['avg_loss']:+.2f}")
-    print(f"最大利益: {summary['max_win']:+.2f} / 最大損失: {summary['max_loss']:+.2f}")
-    print(f"最大ドローダウン: {summary['max_drawdown']:.2f}")
+    signal, score, reasons, breakdown = judge_signal(latest, prev)
+    stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
+    take_profit = calc_take_profit(signal, latest["Close"], latest.get("ATR"))
+    stars, star_label = score_to_stars(score)
 
-    result = {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "data_source": ticker,
-        "period_start": df.index[0].strftime("%Y-%m-%d %H:%M"),
-        "period_end": df.index[-1].strftime("%Y-%m-%d %H:%M"),
-        "summary": summary,
-        "trades": trades[-50:],
-    }
+    print(f"[{timestamp}] signal: {signal} (score: {score:+.1f})")
+    for r in reasons:
+        print(f"  - {r}")
+    if stop_price:
+        print(f"  stop price (ATRx3): {stop_price:,.2f}")
+
+    timeframes = build_multi_timeframe()
+    composite = composite_judgement(signal, timeframes)
+    print(f"  composite (5m+15m+1h): {composite}")
+    for tf_key, tf_val in timeframes.items():
+        print(f"  [{tf_val.get('label', tf_key)}] signal={tf_val.get('signal')} score={tf_val.get('score')}")
+
+    economic_events = check_economic_events(df.index[-1].to_pydatetime().replace(tzinfo=None))
+    if economic_events["warning"]:
+        for ev in economic_events["warning_events"]:
+            print(f"  WARNING: economic event nearby - {ev['time']} {ev['label']}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-    print(f"\n結果を書き出しました: {OUTPUT_PATH}")
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"data written: {OUTPUT_PATH}")
+
+    append_history(latest, signal, score, timestamp, ticker)
+
+    if signal == "様子見":
+        print("hold - skipping notification")
+        return
+
+    if not webhook_url:
+        print("warning: SLACK_WEBHOOK_URL not set, skipping notification")
+        return
+
+    send_slack_notification(webhook_url, signal, score, reasons, latest, timestamp, stop_price)
+    print("Slack notification sent.")
 
 
 if __name__ == "__main__":
