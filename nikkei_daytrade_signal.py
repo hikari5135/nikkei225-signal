@@ -113,33 +113,42 @@ def add_indicators(df):
 def judge_signal(row, prev_row):
     score = 0
     reasons = []
+    breakdown = {"MA": 0, "RSI": 0, "MACD": 0, "BB": 0}
 
     if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
         score += 3
+        breakdown["MA"] = 3
         reasons.append("MA5 crossed above MA25 (Golden Cross)")
     elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
         score -= 3
+        breakdown["MA"] = -3
         reasons.append("MA5 crossed below MA25 (Dead Cross)")
 
     if row["RSI"] < 30:
         score += 1.5
+        breakdown["RSI"] = 1.5
         reasons.append(f"RSI={row['RSI']:.1f} (oversold)")
     elif row["RSI"] > 70:
         score -= 1.5
+        breakdown["RSI"] = -1.5
         reasons.append(f"RSI={row['RSI']:.1f} (overbought)")
 
     if prev_row["MACD_hist"] <= 0 and row["MACD_hist"] > 0:
         score += 1.5
+        breakdown["MACD"] = 1.5
         reasons.append("MACD histogram turned positive")
     elif prev_row["MACD_hist"] >= 0 and row["MACD_hist"] < 0:
         score -= 1.5
+        breakdown["MACD"] = -1.5
         reasons.append("MACD histogram turned negative")
 
     if row["Close"] <= row["BB_lower"]:
         score += 1
+        breakdown["BB"] = 1
         reasons.append("Price <= Bollinger -2sigma (possible rebound)")
     elif row["Close"] >= row["BB_upper"]:
         score -= 1
+        breakdown["BB"] = -1
         reasons.append("Price >= Bollinger +2sigma (possible pullback)")
 
     if score >= 3:
@@ -149,7 +158,35 @@ def judge_signal(row, prev_row):
     else:
         signal = "様子見"
 
-    return signal, score, reasons
+    return signal, score, reasons, breakdown
+
+
+def score_to_stars(score):
+    """スコアを5段階の星評価に変換する"""
+    abs_score = abs(score)
+    if abs_score >= 6:
+        stars = 5
+    elif abs_score >= 4.5:
+        stars = 4
+    elif abs_score >= 3:
+        stars = 3
+    elif abs_score >= 1.5:
+        stars = 2
+    else:
+        stars = 1
+
+    if score >= 3:
+        label = "強い買い" if stars >= 4 else "買い"
+    elif score <= -3:
+        label = "強い売り" if stars >= 4 else "売り"
+    elif score > 0:
+        label = "弱い買い"
+    elif score < 0:
+        label = "弱い売り"
+    else:
+        label = "様子見"
+
+    return stars, label
 
 
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
@@ -159,6 +196,21 @@ def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
         return round(float(close_price - atr * atr_mult), 2)
     elif signal == "売り":
         return round(float(close_price + atr * atr_mult), 2)
+    return None
+
+
+DEFAULT_RR = 2.0  # リスクリワード比率(デフォルト1:2)
+
+
+def calc_take_profit(signal, close_price, atr, atr_mult=3.0, rr=DEFAULT_RR):
+    """ATRベースの損切り幅(risk)にRR倍した値を利確目標(reward)とする"""
+    if atr is None or pd.isna(atr):
+        return None
+    risk = atr * atr_mult
+    if signal == "買い":
+        return round(float(close_price + risk * rr), 2)
+    elif signal == "売り":
+        return round(float(close_price - risk * rr), 2)
     return None
 
 
@@ -179,7 +231,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -209,6 +261,11 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "score": score,
         "reasons": reasons,
         "stop_price": stop_price,
+        "take_profit": take_profit,
+        "risk_reward": DEFAULT_RR if (stop_price is not None and take_profit is not None) else None,
+        "score_breakdown": breakdown or {},
+        "stars": stars,
+        "star_label": star_label,
         "candles": candles,
         "data_source": ticker,
         "timeframes": timeframes or {},
@@ -256,7 +313,7 @@ def get_timeframe_signal(label, interval, days):
             return {"label": label, "signal": None, "score": None, "error": "not enough data"}
         latest_row = df.iloc[-1]
         prev_row = df.iloc[-2]
-        signal, score, _reasons = judge_signal(latest_row, prev_row)
+        signal, score, _reasons, _breakdown = judge_signal(latest_row, prev_row)
         return {
             "label": label,
             "signal": signal,
@@ -398,8 +455,10 @@ def main():
     prev = df.iloc[-2]
     timestamp = df.index[-1].strftime("%Y-%m-%d %H:%M")
 
-    signal, score, reasons = judge_signal(latest, prev)
+    signal, score, reasons, breakdown = judge_signal(latest, prev)
     stop_price = calc_stop_price(signal, latest["Close"], latest.get("ATR"))
+    take_profit = calc_take_profit(signal, latest["Close"], latest.get("ATR"))
+    stars, star_label = score_to_stars(score)
 
     print(f"[{timestamp}] signal: {signal} (score: {score:+.1f})")
     for r in reasons:
@@ -419,7 +478,7 @@ def main():
             print(f"  WARNING: economic event nearby - {ev['time']} {ev['label']}")
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
