@@ -14,7 +14,8 @@ from datetime import datetime, timezone, timedelta
 
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data.json")
-
+HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "signal_history.jsonl")
+MAX_HISTORY_LINES = 20000  # 肥大化防止（5分間隔で約2ヶ月分）
 
 def debug_check_intervals():
     end = datetime.now(timezone.utc)
@@ -209,7 +210,44 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
     }
     return data
 
+def append_history(latest, signal, score, timestamp, ticker):
+    """毎回の実行結果を1行ずつ追記していく（バックテスト用の時系列データ）"""
+    record = {
+        "time": timestamp,
+        "close": round(float(latest["Close"]), 2),
+        "signal": signal,
+        "score": score,
+        "atr": None if pd.isna(latest.get("ATR")) else round(float(latest["ATR"]), 2),
+    }
 
+    os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
+
+    if os.path.exists(HISTORY_PATH):
+        with open(HISTORY_PATH, "rb") as f:
+            try:
+                f.seek(-200, os.SEEK_END)
+            except OSError:
+                f.seek(0)
+            last_line = f.readlines()[-1].decode("utf-8", errors="ignore").strip()
+        if last_line:
+            try:
+                last_record = json.loads(last_line)
+                if last_record.get("time") == timestamp:
+                    print(f"history: {timestamp} already logged, skip")
+                    return
+            except json.JSONDecodeError:
+                pass
+
+    with open(HISTORY_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    if len(lines) > MAX_HISTORY_LINES:
+        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+            f.writelines(lines[-MAX_HISTORY_LINES:])
+
+    print(f"history appended: {timestamp} ({len(lines)} lines)")
 def main():
     webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
 
@@ -241,7 +279,7 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
-
+append_history(latest, signal, score, timestamp, ticker)
     if signal == "様子見":
         print("hold - skipping notification")
         return
