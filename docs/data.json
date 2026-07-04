@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-07-04T11:50:48.316431+00:00",
+  "updated_at": "2026-07-04T12:01:04.444443+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
-  "signal": "買い",
-"score": 4.5,
+  "signal": "様子見",
+  "score": 0,
   "reasons": [],
- "stop_price": 69600,
+  "stop_price": null,
   "take_profit": null,
   "risk_reward": null,
   "score_breakdown": {
