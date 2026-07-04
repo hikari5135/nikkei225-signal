@@ -89,6 +89,34 @@
   .reasons ul { margin: 0; padding-left: 18px; }
   .reasons li { margin-bottom: 6px; font-size: 14px; line-height: 1.5; }
 
+  .timeframe-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .timeframe-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .composite-label { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .tf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .tf-box {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+  }
+  .tf-box-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .tf-box-signal { font-size: 15px; font-weight: 700; }
+  .tf-box-signal.buy { color: var(--buy); }
+  .tf-box-signal.sell { color: var(--sell); }
+  .tf-box-signal.hold { color: var(--hold); }
+  .tf-box-score { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
   .chart-card {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -181,6 +209,37 @@ async function loadDashboard() {
     const sourceLabel = data.data_source === 'NIY=F' ? 'CME日経225先物(円建て)' : '日経平均株価指数';
     updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel}`;
 
+    // 複数時間軸判定カード(データがある場合のみ表示)
+    let timeframeHtml = '';
+    if (data.composite) {
+      const tf = data.timeframes || {};
+      const tfEntries = [
+        { label: '5分足', signal: data.signal, score: data.score },
+        ...Object.values(tf).map(v => ({ label: v.label, signal: v.signal, score: v.score, error: v.error })),
+      ];
+      const tfBoxes = tfEntries.map(e => {
+        const cls = e.signal === '買い' ? 'buy' : e.signal === '売り' ? 'sell' : 'hold';
+        const scoreText = (e.score !== undefined && e.score !== null)
+          ? 'score: ' + (e.score > 0 ? '+' : '') + e.score
+          : (e.error ? 'データ取得失敗' : '');
+        return `
+          <div class="tf-box">
+            <div class="tf-box-label">${e.label}</div>
+            <div class="tf-box-signal ${cls}">${e.signal || '-'}</div>
+            <div class="tf-box-score">${scoreText}</div>
+          </div>
+        `;
+      }).join('');
+
+      timeframeHtml = `
+        <div class="timeframe-card">
+          <h2>複数時間軸判定</h2>
+          <div class="composite-label">総合判定: ${data.composite}</div>
+          <div class="tf-grid">${tfBoxes}</div>
+        </div>
+      `;
+    }
+
     content.innerHTML = `
       <div class="signal-card">
         <div class="signal-badge ${signalClass}">${data.signal}</div>
@@ -191,6 +250,8 @@ async function loadDashboard() {
           ${data.stop_price ? `<div class="score">推奨損切りライン(ATR×3): ¥${data.stop_price.toLocaleString()}</div>` : ''}
         </div>
       </div>
+
+      ${timeframeHtml}
 
       <div class="reasons">
         <h2>判定根拠</h2>
