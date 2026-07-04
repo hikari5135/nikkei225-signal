@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-04T02:20:48.335347+00:00",
+  "updated_at": "2026-07-04T02:30:55.637105+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
@@ -1508,5 +1508,24 @@
       "bb_lower": 69362.97
     }
   ],
-  "data_source": "^N225"
+  "data_source": "^N225",
+  "timeframes": {
+    "15m": {
+      "label": "15分足",
+      "signal": "様子見",
+      "score": -1.5,
+      "close": 69365.0,
+      "time": "2026-07-03 12:45",
+      "data_source": "NIY=F"
+    },
+    "1h": {
+      "label": "1時間足",
+      "signal": "買い",
+      "score": 3,
+      "close": 69365.0,
+      "time": "2026-07-03 12:00",
+      "data_source": "NIY=F"
+    }
+  },
+  "composite": "買い優勢"
 }
