@@ -1,673 +1,265 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日経225 デイトレシグナル</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-  :root {
-    --bg: #eef0f2;
-    --panel: #ffffff;
-    --border: #d8dce1;
-    --text: #20242b;
-    --muted: #6b7280;
-    --buy: #1d8a45;
-    --sell: #c0362c;
-    --hold: #6b7280;
-    --accent: #3f6fd1;
-    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-    padding: 24px;
-  }
-  .wrap { max-width: 1000px; margin: 0 auto; }
+# -*- coding: utf-8 -*-
+"""
+マイクロ日経225 デイトレシグナル バックテストツール
+======================================================
 
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0;
-    letter-spacing: 0.02em;
-  }
-  .updated {
-    color: var(--muted);
-    font-size: 12px;
-    font-family: var(--mono);
-  }
+nikkei_daytrade_signal.py と全く同じシグナル判定ロジックを過去データに適用し、
+「もしこのシグナル通りに売買していたらどうなっていたか」を検証します。
 
-  .signal-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .signal-badge {
-    font-size: 28px;
-    font-weight: 700;
-    padding: 10px 24px;
-    border-radius: 8px;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-  }
-  .signal-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); border: 1px solid var(--buy); }
-  .signal-badge.sell { background: rgba(218,54,51,0.15); color: var(--sell); border: 1px solid var(--sell); }
-  .signal-badge.hold { background: rgba(110,118,129,0.15); color: var(--hold); border: 1px solid var(--hold); }
+ルール:
+- 「買い」シグナルが出たらロングを建てる(ショートを保有していれば決済してドテン)
+- 「売り」シグナルが出たらショートを建てる(ロングを保有していれば決済してドテン)
+- 「様子見」では何もしない(ポジションがあればそのまま保有を続ける)
+- 最後まで残ったポジションはデータの最終足で強制決済する
 
-  .signal-meta { flex: 1; min-width: 200px; }
-  .price { font-size: 26px; font-weight: 600; font-family: var(--mono); }
-  .price-time { color: var(--muted); font-size: 13px; margin-top: 4px; }
-  .score { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: var(--mono); }
+注意:
+- スプレッド・手数料・スリッページは考慮していません(理論上の数値です)
+- 5分足はyfinanceの制限により直近60日分程度しか取得できません
+- 過去の成績は将来の成績を保証するものではありません
 
-  .reasons {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .reasons h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .reasons ul { margin: 0; padding-left: 18px; }
-  .reasons li { margin-bottom: 6px; font-size: 14px; line-height: 1.5; }
+【必要ライブラリ】
+  pip install yfinance pandas numpy --break-system-packages
+"""
 
-  .timeframe-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .timeframe-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .composite-label { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
-  .tf-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-  }
-  .tf-box {
-    text-align: center;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 8px;
-  }
-  .tf-box-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-  .tf-box-signal { font-size: 15px; font-weight: 700; }
-  .tf-box-signal.buy { color: var(--buy); }
-  .tf-box-signal.sell { color: var(--sell); }
-  .tf-box-signal.hold { color: var(--hold); }
-  .tf-box-score { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+import os
+import sys
+import json
+import yfinance as yf
+import pandas as pd
+import numpy as np
+from datetime import datetime, timezone
 
-  .chart-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .chart-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .chart-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  canvas { max-height: 260px; }
 
-  .disclaimer {
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-    margin-top: 24px;
-    line-height: 1.6;
-  }
+OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "backtest.json")
 
-  .loading, .error {
-    text-align: center;
-    color: var(--muted);
-    padding: 60px 20px;
-  }
-  .error { color: var(--sell); }
 
-  .backtest-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .backtest-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .backtest-period { font-size: 12px; color: var(--muted); margin-bottom: 12px; font-family: var(--mono); }
-  .backtest-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 12px;
-  }
-  .stat-box { text-align: center; }
-  .stat-value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
-  .stat-value.pos { color: var(--buy); }
-  .stat-value.neg { color: var(--sell); }
-  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+def fetch_data(period="60d", interval="5m"):
+    for ticker in ("NIY=F", "^N225"):
+        try:
+            df = yf.download(ticker, period=period, interval=interval, progress=False)
+        except Exception:
+            df = None
+        if df is not None and not df.empty:
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+            if df.index.tz is None:
+                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Tokyo")
+            else:
+                df.index = df.index.tz_convert("Asia/Tokyo")
+            print(f"データ取得元: {ticker} ({len(df)}本)")
+            return df, ticker
+    raise RuntimeError("データ取得に失敗しました。")
 
-  .event-banner {
-    background: #fff8e1;
-    border: 1px solid #f0c14b;
-    color: #7a5b00;
-    border-radius: 8px;
-    padding: 10px 16px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-  .event-info {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    text-align: right;
-  }
 
-  .position-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .position-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .position-form { display: flex; flex-direction: column; gap: 10px; }
-  .position-form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .position-form label { font-size: 12px; color: var(--muted); margin-right: 4px; }
-  .position-form input[type="number"],
-  .position-form input[type="text"],
-  .position-form textarea,
-  .position-form select {
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: inherit;
-    background: #fff;
-    color: var(--text);
-  }
-  .position-form textarea { width: 100%; min-height: 50px; resize: vertical; }
-  .position-btn {
-    padding: 8px 18px;
-    border-radius: 6px;
-    border: 1px solid var(--accent);
-    background: var(--accent);
-    color: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .position-btn.secondary { background: #fff; color: var(--accent); }
-  .position-btn.danger { background: #fff; color: var(--sell); border-color: var(--sell); }
-  .position-btn:hover { opacity: 0.85; }
-  .position-active { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-bottom: 12px; }
-  .position-side-badge { font-weight: 700; padding: 5px 14px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
-  .position-side-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
-  .position-side-badge.sell { background: rgba(218,54,51,0.15); color: var(--sell); }
-  .position-pnl-block { text-align: left; }
-  .position-pnl { font-size: 24px; font-weight: 700; font-family: var(--mono); }
-  .position-pnl.pos { color: var(--buy); }
-  .position-pnl.neg { color: var(--sell); }
-  .position-pnl-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .position-meta-small { font-size: 12px; color: var(--muted); line-height: 1.6; }
-  .position-memo-display {
-    font-size: 13px;
-    margin-top: 8px;
-    padding: 10px 12px;
-    background: var(--bg);
-    border-radius: 6px;
-    white-space: pre-wrap;
-  }
-  .trade-history { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
-  .trade-history h3 { font-size: 12px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
-  .trade-history table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .trade-history th, .trade-history td { padding: 6px 6px; text-align: left; border-bottom: 1px solid var(--border); }
-  .trade-history th { color: var(--muted); font-weight: 600; }
-  .trade-history td.pnl-pos { color: var(--buy); font-family: var(--mono); }
-  .trade-history td.pnl-neg { color: var(--sell); font-family: var(--mono); }
-  .no-position-note { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+def add_indicators(df):
+    close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
 
-  @media (max-width: 640px) {
-    .chart-grid { grid-template-columns: 1fr; }
-    .price { font-size: 22px; }
-    .signal-badge { font-size: 22px; padding: 8px 18px; }
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <h1>日経225 デイトレシグナル</h1>
-    <div class="updated" id="updated">読み込み中...</div>
-  </header>
+    df["MA5"] = close.rolling(5).mean()
+    df["MA25"] = close.rolling(25).mean()
 
-  <div id="event-section"></div>
+    delta = close.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.rolling(14).mean()
+    avg_loss = loss.rolling(14).mean()
+    rs = avg_gain / avg_loss
+    df["RSI"] = 100 - (100 / (1 + rs))
 
-  <div id="content">
-    <div class="loading">データを読み込んでいます...</div>
-  </div>
+    ema12 = close.ewm(span=12, adjust=False).mean()
+    ema26 = close.ewm(span=26, adjust=False).mean()
+    df["MACD"] = ema12 - ema26
+    df["MACD_signal"] = df["MACD"].ewm(span=9, adjust=False).mean()
+    df["MACD_hist"] = df["MACD"] - df["MACD_signal"]
 
-  <div id="position-section"></div>
+    df["BB_mid"] = close.rolling(20).mean()
+    bb_std = close.rolling(20).std()
+    df["BB_upper"] = df["BB_mid"] + 2 * bb_std
+    df["BB_lower"] = df["BB_mid"] - 2 * bb_std
 
-  <div id="backtest-section"></div>
+    tr = pd.concat([
+        high - low,
+        (high - close.shift()).abs(),
+        (low - close.shift()).abs(),
+    ], axis=1).max(axis=1)
+    df["ATR"] = tr.rolling(14).mean()
 
-  <div class="disclaimer">
-    テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
-    本ツールは投資助言ではありません。
-  </div>
-</div>
+    return df
 
-<script>
-async function loadDashboard() {
-  const content = document.getElementById('content');
-  const updatedEl = document.getElementById('updated');
 
-  try {
-    const res = await fetch('data.json?t=' + Date.now());
-    if (!res.ok) throw new Error('データファイルが見つかりません');
-    const data = await res.json();
+def judge_signal(row, prev_row):
+    """nikkei_daytrade_signal.py と同一ロジック"""
+    score = 0
 
-    const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
-    const sourceLabel = data.data_source === 'NIY=F' ? 'CME日経225先物(円建て)' : '日経平均株価指数';
-    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel}`;
+    if prev_row["MA5"] <= prev_row["MA25"] and row["MA5"] > row["MA25"]:
+        score += 3
+    elif prev_row["MA5"] >= prev_row["MA25"] and row["MA5"] < row["MA25"]:
+        score -= 3
 
-    window._latestData = data;
+    if row["RSI"] < 30:
+        score += 1.5
+    elif row["RSI"] > 70:
+        score -= 1.5
 
-    // 経済指標カレンダーの表示(警告 or 次のイベント案内)
-    const eventSection = document.getElementById('event-section');
-    const ee = data.economic_events;
-    if (ee && ee.warning && ee.warning_events.length > 0) {
-      const labels = ee.warning_events.map(e => `${e.time} ${e.label}`).join(' / ');
-      eventSection.innerHTML = `<div class="event-banner">⚠ 重要指標の発表が近い時間帯です: ${labels}<br>値動きが荒くなりやすいため、シグナルの取り扱いに注意してください。</div>`;
-    } else if (ee && ee.upcoming_events && ee.upcoming_events.length > 0) {
-      const next = ee.upcoming_events[0];
-      const daysUntil = Math.floor(next.hours_until / 24);
-      const hoursRemainder = Math.round(next.hours_until % 24);
-      eventSection.innerHTML = `<div class="event-info">次の重要指標: ${next.time} ${next.label}(${daysUntil}日${hoursRemainder}時間後)</div>`;
-    } else {
-      eventSection.innerHTML = '';
-    }
+    if prev_row["MACD_hist"] <= 0 and row["MACD_hist"] > 0:
+        score += 1.5
+    elif prev_row["MACD_hist"] >= 0 and row["MACD_hist"] < 0:
+        score -= 1.5
 
-    // 複数時間軸判定カード(データがある場合のみ表示)
-    let timeframeHtml = '';
-    if (data.composite) {
-      const tf = data.timeframes || {};
-      const tfEntries = [
-        { label: '5分足', signal: data.signal, score: data.score },
-        ...Object.values(tf).map(v => ({ label: v.label, signal: v.signal, score: v.score, error: v.error })),
-      ];
-      const tfBoxes = tfEntries.map(e => {
-        const cls = e.signal === '買い' ? 'buy' : e.signal === '売り' ? 'sell' : 'hold';
-        const scoreText = (e.score !== undefined && e.score !== null)
-          ? 'score: ' + (e.score > 0 ? '+' : '') + e.score
-          : (e.error ? 'データ取得失敗' : '');
-        return `
-          <div class="tf-box">
-            <div class="tf-box-label">${e.label}</div>
-            <div class="tf-box-signal ${cls}">${e.signal || '-'}</div>
-            <div class="tf-box-score">${scoreText}</div>
-          </div>
-        `;
-      }).join('');
+    if row["Close"] <= row["BB_lower"]:
+        score += 1
+    elif row["Close"] >= row["BB_upper"]:
+        score -= 1
 
-      timeframeHtml = `
-        <div class="timeframe-card">
-          <h2>複数時間軸判定</h2>
-          <div class="composite-label">総合判定: ${data.composite}</div>
-          <div class="tf-grid">${tfBoxes}</div>
-        </div>
-      `;
-    }
+    if score >= 3:
+        return "買い"
+    elif score <= -3:
+        return "売り"
+    return "様子見"
 
-    content.innerHTML = `
-      <div class="signal-card">
-        <div class="signal-badge ${signalClass}">${data.signal}</div>
-        <div class="signal-meta">
-          <div class="price">¥${data.latest_close.toLocaleString()}</div>
-          <div class="price-time">${data.latest_time} 時点</div>
-          <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
-          ${data.stop_price ? `<div class="score">推奨損切りライン(ATR×3): ¥${data.stop_price.toLocaleString()}</div>` : ''}
-        </div>
-      </div>
 
-      ${timeframeHtml}
+def run_backtest(df):
+    """シグナルに従って売買をシミュレーションする"""
+    trades = []
+    position = None
 
-      <div class="reasons">
-        <h2>判定根拠</h2>
-        <ul>${data.reasons.map(r => `<li>${r}</li>`).join('')}</ul>
-      </div>
+    rows = df.to_dict("records")
+    times = df.index.tolist()
 
-      <div class="chart-card">
-        <h2>価格 / 移動平均線</h2>
-        <canvas id="priceChart"></canvas>
-      </div>
+    for i in range(1, len(rows)):
+        row = rows[i]
+        prev_row = rows[i - 1]
+        signal = judge_signal(row, prev_row)
+        price = row["Close"]
+        time_str = times[i].strftime("%Y-%m-%d %H:%M")
 
-      <div class="chart-grid">
-        <div class="chart-card">
-          <h2>RSI</h2>
-          <canvas id="rsiChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <h2>MACD</h2>
-          <canvas id="macdChart"></canvas>
-        </div>
-      </div>
-    `;
+        if signal == "買い":
+            if position and position["side"] == "short":
+                pnl = position["entry_price"] - price
+                trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
+                position = None
+            if position is None:
+                position = {"side": "long", "entry_price": price, "entry_time": time_str}
 
-    const labels = data.candles.map(c => c.time.slice(5));
-    const closes = data.candles.map(c => c.close);
-    const ma5 = data.candles.map(c => c.ma5);
-    const ma25 = data.candles.map(c => c.ma25);
-    const bbUpper = data.candles.map(c => c.bb_upper);
-    const bbLower = data.candles.map(c => c.bb_lower);
-    const rsi = data.candles.map(c => c.rsi);
-    const macd = data.candles.map(c => c.macd);
-    const macdSignal = data.candles.map(c => c.macd_signal);
-    const macdHist = data.candles.map(c => c.macd_hist);
+        elif signal == "売り":
+            if position and position["side"] == "long":
+                pnl = price - position["entry_price"]
+                trades.append({**position, "exit_price": price, "exit_time": time_str, "pnl": pnl})
+                position = None
+            if position is None:
+                position = {"side": "short", "entry_price": price, "entry_time": time_str}
 
-    const gridColor = '#dde1e6';
-    const textColor = '#6b7280';
-    const commonScales = {
-      x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor } },
-      y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
-    };
+    if position:
+        last_price = rows[-1]["Close"]
+        last_time = times[-1].strftime("%Y-%m-%d %H:%M")
+        if position["side"] == "long":
+            pnl = last_price - position["entry_price"]
+        else:
+            pnl = position["entry_price"] - last_price
+        trades.append({**position, "exit_price": last_price, "exit_time": last_time, "pnl": pnl, "forced_exit": True})
 
-    if (window._charts) {
-      window._charts.forEach(c => c.destroy());
-    }
-    window._charts = [];
+    return trades
 
-    window._charts.push(new Chart(document.getElementById('priceChart'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: '終値', data: closes, borderColor: '#20242b', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
-          { label: 'MA5', data: ma5, borderColor: '#4f8ef7', borderWidth: 1, pointRadius: 0, tension: 0.1 },
-          { label: 'MA25', data: ma25, borderColor: '#f0883e', borderWidth: 1, pointRadius: 0, tension: 0.1 },
-          { label: 'BB+2σ', data: bbUpper, borderColor: 'rgba(125,133,144,0.4)', borderWidth: 1, pointRadius: 0, borderDash: [4,4], tension: 0.1 },
-          { label: 'BB-2σ', data: bbLower, borderColor: 'rgba(125,133,144,0.4)', borderWidth: 1, pointRadius: 0, borderDash: [4,4], tension: 0.1 },
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
-        scales: commonScales
-      }
-    }));
 
-    window._charts.push(new Chart(document.getElementById('rsiChart'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{ label: 'RSI', data: rsi, borderColor: '#a371f7', borderWidth: 1.5, pointRadius: 0, tension: 0.1 }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: commonScales.x,
-          y: { min: 0, max: 100, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+def summarize(trades):
+    if not trades:
+        return {
+            "total_trades": 0,
+            "win_rate": 0,
+            "total_pnl": 0,
+            "avg_win": 0,
+            "avg_loss": 0,
+            "max_win": 0,
+            "max_loss": 0,
+            "max_drawdown": 0,
         }
-      }
-    }));
 
-    window._charts.push(new Chart(document.getElementById('macdChart'), {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { type: 'bar', label: 'ヒストグラム', data: macdHist, backgroundColor: macdHist.map(v => v >= 0 ? 'rgba(46,160,67,0.6)' : 'rgba(218,54,51,0.6)') },
-          { type: 'line', label: 'MACD', data: macd, borderColor: '#4f8ef7', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
-          { type: 'line', label: 'Signal', data: macdSignal, borderColor: '#f0883e', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
-        scales: commonScales
-      }
-    }));
+    pnls = [t["pnl"] for t in trades]
+    wins = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p <= 0]
 
-    // ポジション管理UI: ポジション保有中 or 初回のみ全体を再描画(未保存の入力を消さないため)
-    const currentPos = getPosition();
-    if (currentPos || !window._positionUIInitialized) {
-      renderPositionUI();
-      window._positionUIInitialized = true;
+    cum = np.cumsum(pnls)
+    peak = np.maximum.accumulate(cum)
+    drawdown = cum - peak
+    max_dd = float(drawdown.min()) if len(drawdown) else 0
+
+    return {
+        "total_trades": len(trades),
+        "win_trades": len(wins),
+        "lose_trades": len(losses),
+        "stop_loss_trades": sum(1 for t in trades if t.get("stop_loss")),
+        "win_rate": round(len(wins) / len(trades) * 100, 1) if trades else 0,
+        "total_pnl": round(float(sum(pnls)), 2),
+        "avg_win": round(float(np.mean(wins)), 2) if wins else 0,
+        "avg_loss": round(float(np.mean(losses)), 2) if losses else 0,
+        "max_win": round(float(max(pnls)), 2),
+        "max_loss": round(float(min(pnls)), 2),
+        "max_drawdown": round(max_dd, 2),
+        "expectancy": round(float(sum(pnls)) / len(trades), 2) if trades else 0,
     }
-    updatePositionPnL(data.latest_close);
 
-  } catch (err) {
-    content.innerHTML = `<div class="error">データの読み込みに失敗しました: ${err.message}<br>まだGitHub Actionsが一度も実行されていない場合は、手動実行してから再読み込みしてください。</div>`;
-    updatedEl.textContent = '';
-  }
-}
 
-loadDashboard();
+def build_equity_curve(trades):
+    """資産推移(Equity Curve)とドローダウン推移を時系列で返す"""
+    if not trades:
+        return []
+    pnls = [t["pnl"] for t in trades]
+    cum = np.cumsum(pnls)
+    peak = np.maximum.accumulate(cum)
+    drawdown = cum - peak
 
-async function loadBacktest() {
-  const section = document.getElementById('backtest-section');
-  try {
-    const res = await fetch('backtest.json?t=' + Date.now());
-    if (!res.ok) return;
-    const data = await res.json();
-    const s = data.summary;
+    curve = []
+    for i, t in enumerate(trades):
+        curve.append({
+            "trade_no": i + 1,
+            "exit_time": t["exit_time"],
+            "cumulative_pnl": round(float(cum[i]), 2),
+            "drawdown": round(float(drawdown[i]), 2),
+        })
+    return curve
 
-    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
 
-    section.innerHTML = `
-      <div class="backtest-card">
-        <h2>バックテスト結果(同ロジックを過去データに適用した場合)</h2>
-        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}</div>
-        <div class="backtest-stats">
-          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
-          <div class="stat-box"><div class="stat-value">${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
-          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
-          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
-          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
-          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
-          <div class="stat-box"><div class="stat-value">${s.stop_loss_trades || 0}</div><div class="stat-label">損切り発動件数</div></div>
-        </div>
-      </div>
-    `;
-  } catch (err) {
-  }
-}
-loadBacktest();
+def main():
+    df, ticker = fetch_data(period="60d", interval="5m")
+    df = add_indicators(df)
+    df = df.dropna()
 
-const AUTO_REFRESH_SECONDS = 60;
-let secondsLeft = AUTO_REFRESH_SECONDS;
+    if len(df) < 30:
+        print("データが不足しています。")
+        sys.exit(0)
 
-setInterval(() => {
-  secondsLeft -= 1;
-  if (secondsLeft <= 0) {
-    loadDashboard();
-    secondsLeft = AUTO_REFRESH_SECONDS;
-  }
-  const countdownEl = document.getElementById('countdown');
-  if (countdownEl) {
-    countdownEl.textContent = `(${secondsLeft}秒後に自動更新)`;
-  }
-}, 1000);
+    trades = run_backtest(df)
+    summary = summarize(trades)
+    equity_curve = build_equity_curve(trades)
 
-// ===== ポジション管理メモ & 含み損益トラッカー =====
-// このブラウザのlocalStorageにのみ保存されます(他の端末とは同期されません)
+    print("=" * 50)
+    print(f"バックテスト結果 (データ元: {ticker}, 期間: {df.index[0]} 〜 {df.index[-1]})")
+    print("=" * 50)
+    print(f"総トレード数: {summary['total_trades']}")
+    print(f"勝率: {summary['win_rate']}% ({summary.get('win_trades', 0)}勝{summary.get('lose_trades', 0)}敗)")
+    print(f"累計損益: {summary['total_pnl']:+.2f} 円(指数ポイント)")
+    print(f"平均利益: {summary['avg_win']:+.2f} / 平均損失: {summary['avg_loss']:+.2f}")
+    print(f"最大利益: {summary['max_win']:+.2f} / 最大損失: {summary['max_loss']:+.2f}")
+    print(f"最大ドローダウン: {summary['max_drawdown']:.2f}")
+    print(f"期待値(1トレード平均): {summary['expectancy']:+.2f} pt")
 
-const POSITION_KEY = 'nikkei_position_v1';
-const HISTORY_KEY = 'nikkei_trade_history_v1';
+    result = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "data_source": ticker,
+        "period_start": df.index[0].strftime("%Y-%m-%d %H:%M"),
+        "period_end": df.index[-1].strftime("%Y-%m-%d %H:%M"),
+        "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)",
+        "summary": summary,
+        "trades": trades[-50:],
+        "equity_curve": equity_curve[-200:],
+    }
 
-function getPosition() {
-  try {
-    const raw = localStorage.getItem(POSITION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function setPosition(pos) {
-  localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
-}
-function clearPosition() {
-  localStorage.removeItem(POSITION_KEY);
-}
-function getTradeHistory() {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
-}
-function addTradeToHistory(trade) {
-  const history = getTradeHistory();
-  history.unshift(trade);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
-}
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"\n結果を書き出しました: {OUTPUT_PATH}")
 
-function renderPositionUI() {
-  const section = document.getElementById('position-section');
-  if (!section) return;
-  const pos = getPosition();
-  const history = getTradeHistory();
-  const latest = window._latestData;
-  const currentPrice = latest ? latest.latest_close : null;
-  const currentSignal = latest ? latest.signal : null;
 
-  let historyHtml = '';
-  if (history.length > 0) {
-    const rows = history.slice(0, 8).map(t => {
-      const pnlClass = t.pnl > 0 ? 'pnl-pos' : t.pnl < 0 ? 'pnl-neg' : '';
-      return `
-        <tr>
-          <td>${t.exitTime || '-'}</td>
-          <td>${t.side === 'buy' ? '買い' : '売り'}</td>
-          <td>${t.entryPrice.toLocaleString()}</td>
-          <td>${t.exitPrice.toLocaleString()}</td>
-          <td class="${pnlClass}">${t.pnl > 0 ? '+' : ''}${t.pnl.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join('');
-    historyHtml = `
-      <div class="trade-history">
-        <h3>直近の記録(最大8件, このブラウザ内にのみ保存)</h3>
-        <table>
-          <thead><tr><th>決済時刻</th><th>方向</th><th>エントリー</th><th>決済</th><th>損益(pt)</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (pos) {
-    const sideLabel = pos.side === 'buy' ? '買い' : '売り';
-    const sideClass = pos.side === 'buy' ? 'buy' : 'sell';
-    section.innerHTML = `
-      <div class="position-card">
-        <h2>ポジション管理</h2>
-        <div class="position-active">
-          <span class="position-side-badge ${sideClass}">${sideLabel}中</span>
-          <div class="position-pnl-block">
-            <div class="position-pnl" id="live-pnl">計算中...</div>
-            <div class="position-pnl-label">含み損益(pt)</div>
-          </div>
-          <div class="position-meta-small">
-            エントリー: ¥${pos.entryPrice.toLocaleString()}<br>
-            時刻: ${pos.entryTime}
-          </div>
-        </div>
-        ${pos.memo ? `<div class="position-memo-display">${escapeHtml(pos.memo)}</div>` : ''}
-        <div class="position-form-row" style="margin-top:12px;">
-          <button class="position-btn danger" onclick="handleClosePosition()">ポジションを決済する</button>
-        </div>
-        ${historyHtml}
-      </div>
-    `;
-    updatePositionPnL(currentPrice);
-  } else {
-    section.innerHTML = `
-      <div class="position-card">
-        <h2>ポジション管理</h2>
-        <div class="no-position-note">現在記録中のポジションはありません。エントリーしたらこちらに記録しておくと、含み損益を自動計算できます(このブラウザ内にのみ保存されます)。</div>
-        <div class="position-form">
-          <div class="position-form-row">
-            <label>方向</label>
-            <select id="pos-side">
-              <option value="buy" ${currentSignal === '買い' ? 'selected' : ''}>買い</option>
-              <option value="sell" ${currentSignal === '売り' ? 'selected' : ''}>売り</option>
-            </select>
-            <label>価格</label>
-            <input type="number" id="pos-price" step="0.01" value="${currentPrice !== null ? currentPrice : ''}">
-          </div>
-          <textarea id="pos-memo" placeholder="メモ(任意): エントリー根拠や作戦など"></textarea>
-          <div class="position-form-row">
-            <button class="position-btn" onclick="handleOpenPosition()">この内容でエントリー記録</button>
-          </div>
-        </div>
-        ${historyHtml}
-      </div>
-    `;
-  }
-}
-
-function handleOpenPosition() {
-  const side = document.getElementById('pos-side').value;
-  const price = parseFloat(document.getElementById('pos-price').value);
-  const memo = document.getElementById('pos-memo').value;
-  if (isNaN(price)) { alert('価格を入力してください'); return; }
-  const now = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
-  setPosition({ side, entryPrice: price, entryTime: now, memo });
-  renderPositionUI();
-}
-
-function handleClosePosition() {
-  const pos = getPosition();
-  if (!pos) return;
-  const currentPrice = window._latestData ? window._latestData.latest_close : null;
-  const input = prompt('決済価格を入力してください', currentPrice !== null ? currentPrice : pos.entryPrice);
-  if (input === null) return;
-  const exitPrice = parseFloat(input);
-  if (isNaN(exitPrice)) { alert('数値を入力してください'); return; }
-  const pnl = pos.side === 'buy' ? (exitPrice - pos.entryPrice) : (pos.entryPrice - exitPrice);
-  const exitTime = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
-  addTradeToHistory({ ...pos, exitPrice, exitTime, pnl });
-  clearPosition();
-  renderPositionUI();
-}
-
-function updatePositionPnL(currentPrice) {
-  const pos = getPosition();
-  const el = document.getElementById('live-pnl');
-  if (!pos || !el || currentPrice === null || currentPrice === undefined) return;
-  const pnl = pos.side === 'buy' ? (currentPrice - pos.entryPrice) : (pos.entryPrice - currentPrice);
-  el.textContent = (pnl > 0 ? '+' : '') + pnl.toFixed(2);
-  el.className = 'position-pnl ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
-}
-</script>
-</body>
-</html>
+if __name__ == "__main__":
+    main()
