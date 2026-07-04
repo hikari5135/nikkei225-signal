@@ -17,6 +17,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "
 HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "signal_history.jsonl")
 MAX_HISTORY_LINES = 20000  # 肥大化防止（5分間隔で約2ヶ月分）
 
+
 def debug_check_intervals():
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=2)
@@ -210,6 +211,7 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price):
     }
     return data
 
+
 def append_history(latest, signal, score, timestamp, ticker):
     """毎回の実行結果を1行ずつ追記していく（バックテスト用の時系列データ）"""
     record = {
@@ -248,6 +250,8 @@ def append_history(latest, signal, score, timestamp, ticker):
             f.writelines(lines[-MAX_HISTORY_LINES:])
 
     print(f"history appended: {timestamp} ({len(lines)} lines)")
+
+
 def main():
     webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
 
@@ -279,7 +283,9 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
-append_history(latest, signal, score, timestamp, ticker)
+
+    append_history(latest, signal, score, timestamp, ticker)
+
     if signal == "様子見":
         print("hold - skipping notification")
         return
