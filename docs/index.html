@@ -371,6 +371,48 @@
   .position-sltp-row .sltp-item.sl .sltp-value { color: var(--sell); }
   .position-sltp-row .sltp-item.tp .sltp-value { color: var(--buy); }
 
+  .signal-card.composite-buy-bg { background: linear-gradient(135deg, #eafaf0, #ffffff); }
+  .signal-card.composite-sell-bg { background: linear-gradient(135deg, #fdecea, #ffffff); }
+  .signal-card.composite-hold-bg { background: linear-gradient(135deg, #fffbe8, #ffffff); }
+
+  .score-points { font-size: 20px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+  .score-points.pos { color: var(--buy); }
+  .score-points.neg { color: var(--sell); }
+  .score-points.zero { color: var(--muted); }
+  .bt-points { font-size: 15px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
+  .tf-bar-track { width: 100%; height: 6px; background: #e5e8ec; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .tf-bar-fill { height: 100%; border-radius: 3px; }
+  .tf-bar-fill.buy { background: var(--buy); }
+  .tf-bar-fill.sell { background: var(--sell); }
+  .tf-bar-fill.hold { background: var(--hold); }
+
+  .suggested-levels {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+  .suggested-levels-title { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .suggested-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    text-align: center;
+  }
+  .suggested-grid .sg-label { font-size: 10px; color: var(--muted); }
+  .suggested-grid .sg-value { font-size: 14px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .suggested-grid .sg-value.entry { color: var(--text); }
+  .suggested-grid .sg-value.sl { color: var(--sell); }
+  .suggested-grid .sg-value.tp { color: var(--buy); }
+  .suggested-grid .sg-value.rr { color: var(--accent); }
+
+  .updated-live { display: inline-flex; align-items: center; gap: 4px; }
+  .updated-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .updated-dot.fresh { background: var(--buy); }
+  .updated-dot.stale { background: #f0b400; }
+  .updated-dot.old { background: var(--muted); }
+
   @media (max-width: 640px) {
     .chart-grid { grid-template-columns: 1fr; }
     .price { font-size: 22px; }
@@ -417,7 +459,9 @@ async function loadDashboard() {
 
     const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
     const sourceLabel = data.data_source === 'NIY=F' ? 'CME日経225先物(円建て)' : '日経平均株価指数';
-    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel}`;
+    window._lastUpdatedAt = new Date(data.updated_at).getTime();
+    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel} <span class="updated-live" id="updated-live"></span>`;
+    updateLiveAgo();
 
     window._latestData = data;
 
@@ -454,19 +498,24 @@ async function loadDashboard() {
     if (data.composite) {
       const tf = data.timeframes || {};
       const tfEntries = [
-        { label: '5分足', signal: data.signal, score: data.score },
-        ...Object.values(tf).map(v => ({ label: v.label, signal: v.signal, score: v.score, error: v.error })),
+        { label: '5分足', signal: data.signal, score: data.score, scoreNorm: data.score_normalized },
+        ...Object.values(tf).map(v => ({ label: v.label, signal: v.signal, score: v.score, scoreNorm: v.score_normalized, error: v.error })),
       ];
       const tfBoxes = tfEntries.map(e => {
         const cls = e.signal === '買い' ? 'buy' : e.signal === '売り' ? 'sell' : 'hold';
         const scoreText = (e.score !== undefined && e.score !== null)
           ? 'score: ' + (e.score > 0 ? '+' : '') + e.score
           : (e.error ? 'データ取得失敗' : '');
+        const barWidth = (e.scoreNorm !== undefined && e.scoreNorm !== null) ? Math.min(100, Math.abs(e.scoreNorm)) : 0;
+        const barHtml = (e.scoreNorm !== undefined && e.scoreNorm !== null) ? `
+          <div class="tf-bar-track"><div class="tf-bar-fill ${cls}" style="width:${barWidth}%"></div></div>
+        ` : '';
         return `
           <div class="tf-box">
             <div class="tf-box-label">${e.label}</div>
             <div class="tf-box-signal ${cls}">${e.signal || '-'}</div>
             <div class="tf-box-score">${scoreText}</div>
+            ${barHtml}
           </div>
         `;
       }).join('');
@@ -510,6 +559,7 @@ async function loadDashboard() {
           <div class="breakdown-total-box">
             <div class="bt-stars">${totalStars}</div>
             <div class="bt-value ${totalCls}">${data.score > 0 ? '+' : ''}${data.score}</div>
+            <div class="bt-points">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点 / 100点</div>
             <div class="bt-label">総合スコア(${data.star_label || ''})</div>
           </div>
           <div class="breakdown-grid emphasized">
@@ -535,18 +585,27 @@ async function loadDashboard() {
       `;
     }
 
+    // 複合判定に応じた背景色分け(買い優勢=緑, 売り優勢=赤, それ以外=黄)
+    let compositeBgClass = 'composite-hold-bg';
+    if (data.composite && data.composite.includes('買い')) {
+      compositeBgClass = 'composite-buy-bg';
+    } else if (data.composite && data.composite.includes('売り')) {
+      compositeBgClass = 'composite-sell-bg';
+    }
+
     // 判定根拠: イベント的な理由があればそれを、無ければ現在の指標状況を表示
     const hasReasons = data.reasons && data.reasons.length > 0;
     const reasonLines = hasReasons ? data.reasons : (data.current_state || []);
     const reasonsTitle = hasReasons ? '判定根拠' : '現在の状況(様子見のため参考情報)';
 
     content.innerHTML = `
-      <div class="signal-card ${signalClass}-card">
+      <div class="signal-card ${signalClass}-card ${compositeBgClass}">
         <div class="signal-badge ${signalClass}">${data.signal}</div>
         <div class="signal-meta">
           <div class="price">¥${data.latest_close.toLocaleString()}</div>
           <div class="price-time">${data.latest_time} 時点</div>
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
+          <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
           <div class="stars">${starsHtml}<span class="star-label">${data.star_label || ''}</span></div>
         </div>
       </div>
@@ -870,6 +929,28 @@ loadBacktest();
 const AUTO_REFRESH_SECONDS = 60;
 let secondsLeft = AUTO_REFRESH_SECONDS;
 
+function updateLiveAgo() {
+  const el = document.getElementById('updated-live');
+  if (!el || !window._lastUpdatedAt) return;
+  const elapsedSec = Math.floor((Date.now() - window._lastUpdatedAt) / 1000);
+  let text, dotClass;
+  if (elapsedSec < 60) {
+    text = `${elapsedSec}秒前`;
+  } else if (elapsedSec < 3600) {
+    text = `${Math.floor(elapsedSec / 60)}分前`;
+  } else {
+    text = `${Math.floor(elapsedSec / 3600)}時間前`;
+  }
+  if (elapsedSec < 600) {
+    dotClass = 'fresh';
+  } else if (elapsedSec < 3600) {
+    dotClass = 'stale';
+  } else {
+    dotClass = 'old';
+  }
+  el.innerHTML = `<span class="updated-dot ${dotClass}"></span>更新から${text}`;
+}
+
 setInterval(() => {
   secondsLeft -= 1;
   if (secondsLeft <= 0) {
@@ -880,6 +961,7 @@ setInterval(() => {
   if (countdownEl) {
     countdownEl.textContent = `(${secondsLeft}秒後に自動更新)`;
   }
+  updateLiveAgo();
 }, 1000);
 
 // ===== ポジション管理メモ & 含み損益トラッカー =====
@@ -954,11 +1036,11 @@ function renderPositionUI() {
   if (pos) {
     const sideLabel = pos.side === 'buy' ? '買い' : '売り';
     const sideClass = pos.side === 'buy' ? 'buy' : 'sell';
-    const sltpRow = (pos.slAtEntry || pos.tpAtEntry || pos.rrAtEntry) ? `
+    const sltpRow = (pos.slAtEntry || pos.tp1AtEntry || pos.tp2AtEntry) ? `
       <div class="position-sltp-row">
         ${pos.slAtEntry ? `<div class="sltp-item sl">SL(参考): <span class="sltp-value">${pos.slAtEntry.toLocaleString()}</span></div>` : ''}
-        ${pos.tpAtEntry ? `<div class="sltp-item tp">TP(参考): <span class="sltp-value">${pos.tpAtEntry.toLocaleString()}</span></div>` : ''}
-        ${pos.rrAtEntry ? `<div class="sltp-item">RR(参考): <span class="sltp-value">1:${pos.rrAtEntry}</span></div>` : ''}
+        ${pos.tp1AtEntry ? `<div class="sltp-item tp">利確①(参考): <span class="sltp-value">${pos.tp1AtEntry.toLocaleString()}</span></div>` : ''}
+        ${pos.tp2AtEntry ? `<div class="sltp-item tp">利確②(参考): <span class="sltp-value">${pos.tp2AtEntry.toLocaleString()}</span></div>` : ''}
       </div>
     ` : '';
     section.innerHTML = `
@@ -986,6 +1068,7 @@ function renderPositionUI() {
     `;
     updatePositionPnL(currentPrice);
   } else {
+    const defaultSide = currentSignal === '売り' ? 'sell' : 'buy';
     section.innerHTML = `
       <div class="position-card">
         <h2>ポジション管理</h2>
@@ -994,13 +1077,14 @@ function renderPositionUI() {
         <div class="position-form">
           <div class="position-form-row">
             <label>方向</label>
-            <select id="pos-side">
-              <option value="buy" ${currentSignal === '買い' ? 'selected' : ''}>買い</option>
-              <option value="sell" ${currentSignal === '売り' ? 'selected' : ''}>売り</option>
+            <select id="pos-side" onchange="updateSuggestedLevels(); syncPosPriceWithEntry();">
+              <option value="buy" ${defaultSide === 'buy' ? 'selected' : ''}>買い</option>
+              <option value="sell" ${defaultSide === 'sell' ? 'selected' : ''}>売り</option>
             </select>
             <label>価格</label>
             <input type="number" id="pos-price" step="0.01" value="${currentPrice !== null ? currentPrice : ''}">
           </div>
+          <div id="suggested-levels-box"></div>
           <textarea id="pos-memo" placeholder="メモ(任意): エントリー根拠や作戦など"></textarea>
           <div class="position-form-row">
             <button class="position-btn" onclick="handleOpenPosition()">この内容でエントリー記録</button>
@@ -1009,7 +1093,39 @@ function renderPositionUI() {
         ${historyHtml}
       </div>
     `;
+    updateSuggestedLevels();
   }
+}
+
+function updateSuggestedLevels() {
+  const box = document.getElementById('suggested-levels-box');
+  const sideSelect = document.getElementById('pos-side');
+  if (!box || !sideSelect) return;
+  const latest = window._latestData;
+  const side = sideSelect.value;
+  const levels = latest && latest.suggested_levels ? latest.suggested_levels[side] : null;
+
+  if (!levels) {
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="suggested-levels">
+      <div class="suggested-levels-title">推奨レベル(ATRベースの参考値)</div>
+      <div class="suggested-grid">
+        <div><div class="sg-label">Entry</div><div class="sg-value entry">${levels.entry.toLocaleString()}</div></div>
+        <div><div class="sg-label">SL</div><div class="sg-value sl">${levels.sl !== null ? levels.sl.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">利確①</div><div class="sg-value tp">${levels.tp1 !== null ? levels.tp1.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">利確②</div><div class="sg-value tp">${levels.tp2 !== null ? levels.tp2.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">RR</div><div class="sg-value rr">1:${levels.rr1} / 1:${levels.rr2}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function syncPosPriceWithEntry() {
+  // 方向を切り替えても価格欄は現在値のままにする(参考レベルはupdateSuggestedLevelsで別途表示される)
 }
 
 function handleOpenPosition() {
@@ -1019,11 +1135,18 @@ function handleOpenPosition() {
   if (isNaN(price)) { alert('価格を入力してください'); return; }
   const now = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
   const latest = window._latestData;
-  // その時点でのシステムのSL/TP/RRをスナップショットとして保存(参考値)
-  const slAtEntry = latest && latest.stop_price ? latest.stop_price : null;
-  const tpAtEntry = latest && latest.take_profit ? latest.take_profit : null;
-  const rrAtEntry = latest && latest.risk_reward ? latest.risk_reward : null;
-  setPosition({ side, entryPrice: price, entryTime: now, memo, slAtEntry, tpAtEntry, rrAtEntry });
+  const levels = latest && latest.suggested_levels ? latest.suggested_levels[side] : null;
+  setPosition({
+    side,
+    entryPrice: price,
+    entryTime: now,
+    memo,
+    slAtEntry: levels ? levels.sl : null,
+    tp1AtEntry: levels ? levels.tp1 : null,
+    tp2AtEntry: levels ? levels.tp2 : null,
+    rr1AtEntry: levels ? levels.rr1 : null,
+    rr2AtEntry: levels ? levels.rr2 : null,
+  });
   renderPositionUI();
 }
 
