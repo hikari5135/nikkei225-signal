@@ -882,10 +882,6 @@ async function loadDashboard() {
   }
 }
 
-loadDashboard();
-loadSignalHistory();
-initLayoutToggle();
-
 // ===== レイアウト切替(横並び/縦並び) =====
 const LAYOUT_KEY = 'nikkei_layout_mode';
 
@@ -911,6 +907,10 @@ function applyLayout(mode) {
     if (btn) btn.textContent = 'レイアウト: 横並び';
   }
 }
+
+loadDashboard();
+loadSignalHistory();
+initLayoutToggle();
 
 async function loadSignalHistory() {
   const section = document.getElementById('signal-history-section');
