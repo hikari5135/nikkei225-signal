@@ -557,6 +557,8 @@
     <div id="forward-test-section"></div>
   </div>
 
+  <div id="daily-single-backtest-section"></div>
+
   <div id="final-summary-section"></div>
 
   <div class="disclaimer">
@@ -1113,6 +1115,84 @@ function renderEquityCurve(curve) {
 }
 loadBacktest();
 loadForwardTest();
+loadDailySingleEntryBacktest();
+
+async function loadDailySingleEntryBacktest() {
+  const section = document.getElementById('daily-single-backtest-section');
+  try {
+    const res = await fetch('backtest_daily_single_entry.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+    const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(1日1回・当日決済版)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}(対象営業日数: ${data.total_days || '-'}日)</div>
+        ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades || 0}勝${s.lose_trades || 0}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    if (data.equity_curve && data.equity_curve.length > 0) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chart-card';
+      wrapper.innerHTML = `
+        <h2>資産推移(1日1回版) / ドローダウン</h2>
+        <canvas id="equityChartDaily"></canvas>
+      `;
+      section.appendChild(wrapper);
+
+      const curve = data.equity_curve;
+      const labels = curve.map(c => c.trade_no);
+      const cumPnl = curve.map(c => c.cumulative_pnl);
+      const drawdown = curve.map(c => c.drawdown);
+      const gridColor = '#dde1e6';
+      const textColor = '#6b7280';
+
+      if (window._equityChartDaily) {
+        window._equityChartDaily.destroy();
+      }
+      window._equityChartDaily = new Chart(document.getElementById('equityChartDaily'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: '累積損益(pt)', data: cumPnl, borderColor: '#1d8a45', backgroundColor: 'rgba(29,138,69,0.08)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+            { label: 'ドローダウン(pt)', data: drawdown, borderColor: '#c0362c', backgroundColor: 'rgba(192,54,44,0.08)', fill: true, borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor }, title: { display: true, text: 'トレード回数(日数とほぼ一致)', color: textColor, font: { size: 10 } } },
+            y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+  } catch (err) {
+  }
+}
 
 async function loadForwardTest() {
   const section = document.getElementById('forward-test-section');
