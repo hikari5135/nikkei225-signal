@@ -297,6 +297,26 @@ def build_suggested_levels(close_price, atr):
     return levels
 
 
+def calc_daily_change(df):
+    """直近の終値と、直近と異なる日付の最後の終値(前営業日終値)を比較する"""
+    if df.empty:
+        return None, None
+    latest_close = float(df.iloc[-1]["Close"])
+    latest_date = df.index[-1].date()
+
+    prev_day_rows = df[df.index.date != latest_date]
+    if prev_day_rows.empty:
+        return None, None
+
+    prev_close = float(prev_day_rows.iloc[-1]["Close"])
+    if prev_close == 0:
+        return None, None
+
+    change = round(latest_close - prev_close, 2)
+    change_pct = round((latest_close - prev_close) / prev_close * 100, 2)
+    return change, change_pct
+
+
 def calc_stop_price(signal, close_price, atr, atr_mult=3.0):
     if atr is None or pd.isna(atr):
         return None
@@ -339,7 +359,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None, atr=None, suggested_levels=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None, atr=None, suggested_levels=None, daily_change=None, daily_change_pct=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -379,6 +399,8 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "summary": summary,
         "atr": None if atr is None or pd.isna(atr) else round(float(atr), 2),
         "suggested_levels": suggested_levels or {},
+        "daily_change": daily_change,
+        "daily_change_pct": daily_change_pct,
         "candles": candles,
         "data_source": ticker,
         "timeframes": timeframes or {},
@@ -596,9 +618,10 @@ def main():
     print(f"  summary: {summary}")
 
     suggested_levels = build_suggested_levels(latest["Close"], latest.get("ATR"))
+    daily_change, daily_change_pct = calc_daily_change(df)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary, latest.get("ATR"), suggested_levels)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary, latest.get("ATR"), suggested_levels, daily_change, daily_change_pct)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
