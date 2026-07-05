@@ -27,7 +27,29 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
     padding: 24px;
   }
-  .wrap { max-width: 1000px; margin: 0 auto; }
+  .wrap { max-width: 1300px; margin: 0 auto; }
+  .two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .two-col-grid { grid-template-columns: 1fr; }
+  }
+  body.force-vertical .two-col-grid { grid-template-columns: 1fr; }
+
+  .layout-toggle-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .layout-toggle-btn:hover { background: var(--bg); }
 
   header {
     display: flex;
@@ -479,7 +501,10 @@
 <div class="wrap">
   <header>
     <h1>日経225 デイトレシグナル</h1>
-    <div class="updated" id="updated">読み込み中...</div>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="toggleLayout()">レイアウト: 横並び</button>
+      <div class="updated" id="updated">読み込み中...</div>
+    </div>
   </header>
 
   <div id="event-section"></div>
@@ -490,13 +515,15 @@
     <div class="loading">データを読み込んでいます...</div>
   </div>
 
-  <div id="signal-history-section"></div>
+  <div class="two-col-grid">
+    <div id="signal-history-section"></div>
+    <div id="position-section"></div>
+  </div>
 
-  <div id="position-section"></div>
-
-  <div id="backtest-section"></div>
-
-  <div id="forward-test-section"></div>
+  <div class="two-col-grid">
+    <div id="backtest-section"></div>
+    <div id="forward-test-section"></div>
+  </div>
 
   <div class="disclaimer">
     テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
@@ -660,6 +687,22 @@ async function loadDashboard() {
     const hasReasons = data.reasons && data.reasons.length > 0;
     const reasonLines = hasReasons ? data.reasons : (data.current_state || []);
     const reasonsTitle = hasReasons ? '判定根拠' : '現在の状況(様子見のため参考情報)';
+    const reasonsHtml = `
+      <div class="reasons">
+        <h2>${reasonsTitle}</h2>
+        <ul>${reasonLines.map(r => `<li>${r}</li>`).join('')}</ul>
+      </div>
+    `;
+
+    // 複数時間軸判定とスコア内訳を横並びに(両方ある場合のみ)
+    const topGridHtml = (timeframeHtml && breakdownHtml)
+      ? `<div class="two-col-grid">${timeframeHtml}${breakdownHtml}</div>`
+      : (timeframeHtml + breakdownHtml);
+
+    // リスクリワードと判定根拠を横並びに(リスクリワードがある場合のみ)
+    const midGridHtml = riskHtml
+      ? `<div class="two-col-grid">${riskHtml}${reasonsHtml}</div>`
+      : reasonsHtml;
 
     content.innerHTML = `
       <div class="signal-card ${signalClass}-card ${compositeBgClass}">
@@ -673,16 +716,9 @@ async function loadDashboard() {
         </div>
       </div>
 
-      ${timeframeHtml}
+      ${topGridHtml}
 
-      ${breakdownHtml}
-
-      ${riskHtml}
-
-      <div class="reasons">
-        <h2>${reasonsTitle}</h2>
-        <ul>${reasonLines.map(r => `<li>${r}</li>`).join('')}</ul>
-      </div>
+      ${midGridHtml}
 
       <div class="chart-card">
         <h2>価格 / 移動平均線</h2>
@@ -848,6 +884,33 @@ async function loadDashboard() {
 
 loadDashboard();
 loadSignalHistory();
+initLayoutToggle();
+
+// ===== レイアウト切替(横並び/縦並び) =====
+const LAYOUT_KEY = 'nikkei_layout_mode';
+
+function initLayoutToggle() {
+  const saved = localStorage.getItem(LAYOUT_KEY) || 'horizontal';
+  applyLayout(saved);
+}
+
+function toggleLayout() {
+  const current = localStorage.getItem(LAYOUT_KEY) || 'horizontal';
+  const next = current === 'horizontal' ? 'vertical' : 'horizontal';
+  localStorage.setItem(LAYOUT_KEY, next);
+  applyLayout(next);
+}
+
+function applyLayout(mode) {
+  const btn = document.getElementById('layout-toggle-btn');
+  if (mode === 'vertical') {
+    document.body.classList.add('force-vertical');
+    if (btn) btn.textContent = 'レイアウト: 縦並び';
+  } else {
+    document.body.classList.remove('force-vertical');
+    if (btn) btn.textContent = 'レイアウト: 横並び';
+  }
+}
 
 async function loadSignalHistory() {
   const section = document.getElementById('signal-history-section');
