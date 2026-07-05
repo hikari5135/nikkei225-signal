@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-05T05:10:45.739476+00:00",
+  "updated_at": "2026-07-05T05:20:49.270864+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
@@ -85,7 +85,7 @@
       "rsi": 30.7,
       "macd": -61.27,
       "macd_signal": -40.0,
-      "macd_hist": -21.28,
+      "macd_hist": -21.27,
       "bb_upper": 69933.28,
       "bb_lower": 69318.2
     },
@@ -99,7 +99,7 @@
       "ma25": 69585.26,
       "rsi": 27.2,
       "macd": -77.63,
-      "macd_signal": -47.52,
+      "macd_signal": -47.53,
       "macd_hist": -30.1,
       "bb_upper": 69958.76,
       "bb_lower": 69255.39
@@ -145,7 +145,7 @@
       "rsi": 19.8,
       "macd": -108.95,
       "macd_signal": -74.21,
-      "macd_hist": -34.75,
+      "macd_hist": -34.74,
       "bb_upper": 69946.47,
       "bb_lower": 69104.91
     },
@@ -159,7 +159,7 @@
       "ma25": 69548.16,
       "rsi": 30.5,
       "macd": -106.19,
-      "macd_signal": -80.6,
+      "macd_signal": -80.61,
       "macd_hist": -25.58,
       "bb_upper": 69899.54,
       "bb_lower": 69096.18
@@ -173,8 +173,8 @@
       "ma5": 69216.68,
       "ma25": 69529.0,
       "rsi": 26.3,
-      "macd": -115.7,
-      "macd_signal": -87.62,
+      "macd": -115.71,
+      "macd_signal": -87.63,
       "macd_hist": -28.08,
       "bb_upper": 69876.49,
       "bb_lower": 69055.86
@@ -205,7 +205,7 @@
       "rsi": 21.5,
       "macd": -126.42,
       "macd_signal": -101.13,
-      "macd_hist": -25.29,
+      "macd_hist": -25.28,
       "bb_upper": 69804.87,
       "bb_lower": 69001.11
     },
@@ -293,7 +293,7 @@
       "ma5": 69355.54,
       "ma25": 69368.8,
       "rsi": 55.0,
-      "macd": -50.38,
+      "macd": -50.39,
       "macd_signal": -90.16,
       "macd_hist": 39.77,
       "bb_upper": 69558.58,
@@ -699,7 +699,7 @@
       "ma25": 68568.88,
       "rsi": 33.1,
       "macd": -298.49,
-      "macd_signal": -315.91,
+      "macd_signal": -315.92,
       "macd_hist": 17.43,
       "bb_upper": 69327.57,
       "bb_lower": 67442.62
