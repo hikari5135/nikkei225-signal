@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-05T00:40:51.862513+00:00",
+  "updated_at": "2026-07-05T00:50:44.745446+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
@@ -54,7 +54,7 @@
       "ma25": 69579.47,
       "rsi": 33.3,
       "macd": -50.36,
-      "macd_signal": -28.85,
+      "macd_signal": -28.86,
       "macd_hist": -21.51,
       "bb_upper": 69918.44,
       "bb_lower": 69356.29
@@ -85,7 +85,7 @@
       "rsi": 30.7,
       "macd": -61.25,
       "macd_signal": -39.97,
-      "macd_hist": -21.29,
+      "macd_hist": -21.28,
       "bb_upper": 69933.28,
       "bb_lower": 69318.2
     },
@@ -99,7 +99,7 @@
       "ma25": 69585.26,
       "rsi": 27.2,
       "macd": -77.61,
-      "macd_signal": -47.49,
+      "macd_signal": -47.5,
       "macd_hist": -30.11,
       "bb_upper": 69958.76,
       "bb_lower": 69255.39
@@ -113,7 +113,7 @@
       "ma5": 69345.64,
       "ma25": 69579.27,
       "rsi": 17.7,
-      "macd": -91.81,
+      "macd": -91.82,
       "macd_signal": -56.36,
       "macd_hist": -35.46,
       "bb_upper": 69973.79,
@@ -144,7 +144,7 @@
       "ma25": 69556.69,
       "rsi": 19.8,
       "macd": -108.94,
-      "macd_signal": -74.18,
+      "macd_signal": -74.19,
       "macd_hist": -34.75,
       "bb_upper": 69946.47,
       "bb_lower": 69104.91
@@ -174,7 +174,7 @@
       "ma25": 69529.0,
       "rsi": 26.3,
       "macd": -115.69,
-      "macd_signal": -87.6,
+      "macd_signal": -87.61,
       "macd_hist": -28.09,
       "bb_upper": 69876.49,
       "bb_lower": 69055.86
@@ -190,7 +190,7 @@
       "rsi": 25.7,
       "macd": -123.55,
       "macd_signal": -94.79,
-      "macd_hist": -28.76,
+      "macd_hist": -28.75,
       "bb_upper": 69859.04,
       "bb_lower": 69014.52
     },
@@ -235,7 +235,7 @@
       "rsi": 36.9,
       "macd": -120.43,
       "macd_signal": -109.42,
-      "macd_hist": -11.01,
+      "macd_hist": -11.0,
       "bb_upper": 69706.01,
       "bb_lower": 68990.15
     },
@@ -248,7 +248,7 @@
       "ma5": 69180.6,
       "ma25": 69409.06,
       "rsi": 45.1,
-      "macd": -107.57,
+      "macd": -107.58,
       "macd_signal": -109.05,
       "macd_hist": 1.48,
       "bb_upper": 69665.9,
@@ -278,7 +278,7 @@
       "ma5": 69276.04,
       "ma25": 69377.6,
       "rsi": 52.4,
-      "macd": -74.33,
+      "macd": -74.34,
       "macd_signal": -100.09,
       "macd_hist": 25.75,
       "bb_upper": 69599.32,
@@ -294,7 +294,7 @@
       "ma25": 69368.8,
       "rsi": 55.0,
       "macd": -50.38,
-      "macd_signal": -90.14,
+      "macd_signal": -90.15,
       "macd_hist": 39.77,
       "bb_upper": 69558.58,
       "bb_lower": 69044.77
