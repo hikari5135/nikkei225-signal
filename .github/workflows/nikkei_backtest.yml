@@ -22,10 +22,13 @@ jobs:
         run: python backtest.py
       - name: Run forward test
         run: python forward_test.py
+      - name: Run daily single-entry backtest
+        run: python backtest_daily_single_entry.py
       - name: Commit updated backtest result
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/backtest.json docs/forward_test.json
+          git add docs/backtest.json docs/forward_test.json docs/backtest_daily_single_entry.json
           git diff --staged --quiet || git commit -m "update backtest result"
           git push
+          
