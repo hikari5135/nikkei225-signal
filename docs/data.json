@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-05T03:50:48.579491+00:00",
+  "updated_at": "2026-07-05T04:00:59.188624+00:00",
   "latest_time": "2026-07-03 15:25",
   "latest_close": 69773.99,
   "signal": "様子見",
@@ -53,7 +53,7 @@
       "ma5": 69477.98,
       "ma25": 69579.47,
       "rsi": 33.3,
-      "macd": -50.37,
+      "macd": -50.38,
       "macd_signal": -28.87,
       "macd_hist": -21.5,
       "bb_upper": 69918.44,
@@ -98,8 +98,8 @@
       "ma5": 69377.15,
       "ma25": 69585.26,
       "rsi": 27.2,
-      "macd": -77.61,
-      "macd_signal": -47.5,
+      "macd": -77.62,
+      "macd_signal": -47.51,
       "macd_hist": -30.11,
       "bb_upper": 69958.76,
       "bb_lower": 69255.39
@@ -129,7 +129,7 @@
       "ma25": 69569.99,
       "rsi": 19.3,
       "macd": -102.05,
-      "macd_signal": -65.5,
+      "macd_signal": -65.51,
       "macd_hist": -36.55,
       "bb_upper": 69961.7,
       "bb_lower": 69145.87
@@ -143,8 +143,8 @@
       "ma5": 69262.64,
       "ma25": 69556.69,
       "rsi": 19.8,
-      "macd": -108.94,
-      "macd_signal": -74.19,
+      "macd": -108.95,
+      "macd_signal": -74.2,
       "macd_hist": -34.75,
       "bb_upper": 69946.47,
       "bb_lower": 69104.91
@@ -175,7 +175,7 @@
       "rsi": 26.3,
       "macd": -115.7,
       "macd_signal": -87.61,
-      "macd_hist": -28.09,
+      "macd_hist": -28.08,
       "bb_upper": 69876.49,
       "bb_lower": 69055.86
     },
@@ -220,7 +220,7 @@
       "rsi": 27.1,
       "macd": -128.9,
       "macd_signal": -106.68,
-      "macd_hist": -22.23,
+      "macd_hist": -22.22,
       "bb_upper": 69760.52,
       "bb_lower": 68983.72
     },
@@ -355,7 +355,7 @@
       "rsi": 55.2,
       "macd": -11.92,
       "macd_signal": -44.23,
-      "macd_hist": 32.31,
+      "macd_hist": 32.32,
       "bb_upper": 69596.24,
       "bb_lower": 69021.07
     },
@@ -534,7 +534,7 @@
       "ma25": 69142.45,
       "rsi": 7.9,
       "macd": -202.55,
-      "macd_signal": -128.0,
+      "macd_signal": -128.01,
       "macd_hist": -74.54,
       "bb_upper": 69804.36,
       "bb_lower": 68476.86
@@ -564,7 +564,7 @@
       "ma25": 69042.88,
       "rsi": 6.8,
       "macd": -316.31,
-      "macd_signal": -186.95,
+      "macd_signal": -186.96,
       "macd_hist": -129.36,
       "bb_upper": 70007.42,
       "bb_lower": 67992.08
