@@ -446,6 +446,38 @@
 
   .bd-value.zero-dash { color: var(--muted); font-weight: 400; }
 
+  .daily-change { font-size: 15px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+  .daily-change.pos { color: var(--buy); }
+  .daily-change.neg { color: var(--sell); }
+  .daily-change.zero { color: var(--muted); }
+
+  .composite-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .composite-chip.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
+  .composite-chip.sell { background: rgba(218,54,51,0.15); color: var(--sell); }
+  .composite-chip.hold { background: rgba(240,180,0,0.18); color: #8a6400; }
+
+  .summary-final-card {
+    background: linear-gradient(135deg, #f5f8ff, #ffffff);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .summary-final-card h2 { font-size: 13px; color: var(--accent); margin: 0 0 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .summary-final-stars { font-size: 22px; letter-spacing: 3px; margin-bottom: 8px; }
+  .summary-final-line { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .summary-final-card ul { margin: 0; padding-left: 18px; }
+  .summary-final-card li { font-size: 13px; line-height: 1.6; color: var(--text); }
+
+  .stat-box .stat-emoji { font-size: 14px; margin-right: 2px; }
+
   .forward-test-card {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -524,6 +556,8 @@
     <div id="backtest-section"></div>
     <div id="forward-test-section"></div>
   </div>
+
+  <div id="final-summary-section"></div>
 
   <div class="disclaimer">
     テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
@@ -709,10 +743,16 @@ async function loadDashboard() {
         <div class="signal-badge ${signalClass}">${data.signal}</div>
         <div class="signal-meta">
           <div class="price">¥${data.latest_close.toLocaleString()}</div>
+          ${data.daily_change !== null && data.daily_change !== undefined ? `
+            <div class="daily-change ${data.daily_change > 0 ? 'pos' : data.daily_change < 0 ? 'neg' : 'zero'}">
+              ${data.daily_change > 0 ? '+' : ''}${data.daily_change.toLocaleString()} (${data.daily_change_pct > 0 ? '+' : ''}${data.daily_change_pct}%)
+            </div>
+          ` : ''}
           <div class="price-time">${data.latest_time} 時点</div>
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
           <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
           ${starsHtml}
+          ${data.composite ? `<div><span class="composite-chip ${compositeBgClass === 'composite-buy-bg' ? 'buy' : compositeBgClass === 'composite-sell-bg' ? 'sell' : 'hold'}">総合判定: ${data.composite}</span></div>` : ''}
         </div>
       </div>
 
@@ -876,6 +916,23 @@ async function loadDashboard() {
     }
     updatePositionPnL(data.latest_close);
 
+    // 総合まとめカード(既存の判定理由・複合判定・星評価を再掲するのみ。架空の数値は追加しない)
+    const finalSummarySection = document.getElementById('final-summary-section');
+    if (finalSummarySection) {
+      const finalStarsHtml = isHold
+        ? `<span class="stars neutral">評価対象外(条件未達のため様子見)</span>`
+        : Array.from({length: 5}, (_, i) => `<span class="${i < starsCount ? 'filled' : 'empty'}" style="color:${i < starsCount ? '#d99a00' : '#e8eaed'}">★</span>`).join('');
+      const summaryReasonLines = (data.reasons && data.reasons.length > 0) ? data.reasons : (data.current_state || []);
+      finalSummarySection.innerHTML = `
+        <div class="summary-final-card">
+          <h2>総合まとめ</h2>
+          <div class="summary-final-stars">${finalStarsHtml}</div>
+          <div class="summary-final-line">現在は「${data.signal}」${data.composite ? `(複合判定: ${data.composite})` : ''}</div>
+          ${summaryReasonLines.length > 0 ? `<ul>${summaryReasonLines.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+        </div>
+      `;
+    }
+
   } catch (err) {
     content.innerHTML = `<div class="error">データの読み込みに失敗しました: ${err.message}<br>まだGitHub Actionsが一度も実行されていない場合は、手動実行してから再読み込みしてください。</div>`;
     updatedEl.textContent = '';
@@ -966,6 +1023,10 @@ async function loadBacktest() {
     const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
     const winRateClass = s.win_rate >= 50 ? 'pos' : '';
 
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
     section.innerHTML = `
       <div class="backtest-card">
         <h2>バックテスト結果(同ロジックを過去データに適用した場合)</h2>
@@ -973,13 +1034,13 @@ async function loadBacktest() {
         ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
         <div class="backtest-stats">
           <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
-          <div class="stat-box"><div class="stat-value highlight ${winRateClass}">${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
           <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
           <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
           <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
-          <div class="stat-box"><div class="stat-value highlight ${expClass}">${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
-          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}">${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
         </div>
       </div>
     `;
