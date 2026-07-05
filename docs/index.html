@@ -424,6 +424,50 @@
 
   .bd-value.zero-dash { color: var(--muted); font-weight: 400; }
 
+  .forward-test-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .forward-test-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ft-note { font-size: 13px; color: var(--muted); }
+  .ft-horizon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ft-horizon-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .ft-horizon-title { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .ft-side-row { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; }
+  .ft-side-row .ft-side-label.buy { color: var(--buy); font-weight: 700; }
+  .ft-side-row .ft-side-label.sell { color: var(--sell); font-weight: 700; }
+  .ft-side-row .ft-winrate { font-family: var(--mono); font-weight: 700; }
+  .ft-insufficient { color: var(--muted); font-style: italic; font-size: 11px; }
+
+  .ft-breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .ft-breakdown-col h3 { font-size: 12px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .ft-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+  .ft-bar-row .ft-bar-label { width: 46px; flex-shrink: 0; color: var(--muted); font-family: var(--mono); }
+  .ft-bar-row .ft-bar-track { flex: 1; height: 14px; background: #eef0f2; border-radius: 4px; overflow: hidden; position: relative; }
+  .ft-bar-row .ft-bar-fill { height: 100%; border-radius: 4px; }
+  .ft-bar-row .ft-bar-fill.high { background: var(--buy); }
+  .ft-bar-row .ft-bar-fill.mid { background: #f0b400; }
+  .ft-bar-row .ft-bar-fill.low { background: var(--sell); }
+  .ft-bar-row .ft-bar-fill.na { background: var(--border); }
+  .ft-bar-row .ft-bar-value { width: 60px; flex-shrink: 0; text-align: right; font-family: var(--mono); color: var(--muted); }
+
+  @media (max-width: 640px) {
+    .ft-breakdown-grid { grid-template-columns: 1fr; }
+  }
+
   @media (max-width: 640px) {
     .chart-grid { grid-template-columns: 1fr; }
     .price { font-size: 22px; }
@@ -451,6 +495,8 @@
   <div id="position-section"></div>
 
   <div id="backtest-section"></div>
+
+  <div id="forward-test-section"></div>
 
   <div class="disclaimer">
     テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
@@ -942,6 +988,94 @@ function renderEquityCurve(curve) {
   });
 }
 loadBacktest();
+loadForwardTest();
+
+async function loadForwardTest() {
+  const section = document.getElementById('forward-test-section');
+  try {
+    const res = await fetch('forward_test.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.note || !data.overall || Object.keys(data.overall).length === 0) {
+      section.innerHTML = `
+        <div class="forward-test-card">
+          <h2>フォワードテスト(実際のシグナルの検証)</h2>
+          <div class="ft-note">${data.note || 'データを集計中です。'} (現在の履歴件数: ${data.total_history_points || 0}件, シグナル件数: ${data.total_signals || 0}件)</div>
+        </div>
+      `;
+      return;
+    }
+
+    const horizonLabels = { '30min': '30分後', '60min': '1時間後', '120min': '2時間後' };
+    const horizonBoxes = Object.entries(data.overall).map(([key, sides]) => {
+      const rows = Object.entries(sides).map(([side, s]) => {
+        const cls = side === '買い' ? 'buy' : 'sell';
+        if (!s.sufficient_data) {
+          return `
+            <div class="ft-side-row">
+              <span class="ft-side-label ${cls}">${side}</span>
+              <span class="ft-insufficient">n=${s.n}(データ不足)</span>
+            </div>
+          `;
+        }
+        return `
+          <div class="ft-side-row">
+            <span class="ft-side-label ${cls}">${side}</span>
+            <span class="ft-winrate">${s.win_rate}% (n=${s.n})</span>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="ft-horizon-box">
+          <div class="ft-horizon-title">${horizonLabels[key] || key}</div>
+          ${rows}
+        </div>
+      `;
+    }).join('');
+
+    // 時間帯別・曜日別のバー表示
+    function renderBars(items) {
+      if (!items || items.length === 0) return '<div class="ft-insufficient">データがありません</div>';
+      return items.map(item => {
+        let barClass = 'na';
+        let widthPct = 0;
+        let valueText = 'n=' + item.n;
+        if (item.sufficient_data && item.win_rate !== null) {
+          widthPct = item.win_rate;
+          barClass = item.win_rate >= 55 ? 'high' : item.win_rate >= 45 ? 'mid' : 'low';
+          valueText = `${item.win_rate}%(n=${item.n})`;
+        }
+        return `
+          <div class="ft-bar-row">
+            <span class="ft-bar-label">${item.label}</span>
+            <span class="ft-bar-track"><span class="ft-bar-fill ${barClass}" style="width:${widthPct}%"></span></span>
+            <span class="ft-bar-value">${valueText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    section.innerHTML = `
+      <div class="forward-test-card">
+        <h2>フォワードテスト(実際のシグナルの検証)</h2>
+        <div class="ft-note">実際にリアルタイムで出力されたシグナルが、その後どうなったかを検証しています(n=${data.min_samples_for_stats || 5}未満は参考程度)。総シグナル件数: ${data.total_signals}件</div>
+        <div class="ft-horizon-grid" style="margin-top:12px;">${horizonBoxes}</div>
+        <div class="ft-breakdown-grid">
+          <div class="ft-breakdown-col">
+            <h3>時間帯別勝率(${horizonLabels['60min']}判定)</h3>
+            ${renderBars(data.by_hour)}
+          </div>
+          <div class="ft-breakdown-col">
+            <h3>曜日別勝率(${horizonLabels['60min']}判定)</h3>
+            ${renderBars(data.by_weekday)}
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+  }
+}
 
 const AUTO_REFRESH_SECONDS = 60;
 let secondsLeft = AUTO_REFRESH_SECONDS;
