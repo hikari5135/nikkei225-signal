@@ -1,11 +1,13 @@
 {
-  "updated_at": "2026-07-06T22:51:01.912873+00:00",
-  "latest_time": "2026-07-07 07:40",
-  "latest_close": 70305.0,
+  "updated_at": "2026-07-06T23:01:13.982043+00:00",
+  "latest_time": "2026-07-07 07:45",
+  "latest_close": 70235.0,
   "signal": "様子見",
-  "score": 0,
-  "score_normalized": 0,
-  "reasons": [],
+  "score": 1,
+  "score_normalized": 14,
+  "reasons": [
+    "Price <= Bollinger -2sigma (possible rebound)"
+  ],
   "stop_price": null,
   "take_profit": null,
   "risk_reward": null,
@@ -13,54 +15,39 @@
     "MA": 0,
     "RSI": 0,
     "MACD": 0,
-    "BB": 0
+    "BB": 1
   },
   "stars": 1,
-  "star_label": "様子見",
+  "star_label": "弱い買い",
   "current_state": [
-    "MA5(70290)がMA25(70311)を下回っており、短期は下降基調",
-    "RSI=60.9で中立圏",
+    "MA5(70283)がMA25(70306)を下回っており、短期は下降基調",
+    "RSI=40.7で中立圏",
     "MACDヒストグラムはマイナス(下降モメンタム)",
-    "価格はボリンジャーバンドの通常レンジ内"
+    "価格はボリンジャーバンド-2σ未満で売られすぎ気味"
   ],
-  "summary": "短期は下降基調、MACDは下向き、RSI(61)は中立圏のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「方向感なし」。",
-  "atr": 21.43,
+  "summary": "短期は下降基調、MACDは下向き、RSI(41)は中立圏のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「方向感なし」。",
+  "atr": 24.29,
   "suggested_levels": {
     "buy": {
-      "entry": 70305.0,
-      "sl": 70240.71,
-      "tp1": 70401.43,
-      "tp2": 70497.86,
+      "entry": 70235.0,
+      "sl": 70162.14,
+      "tp1": 70344.29,
+      "tp2": 70453.57,
       "rr1": 1.5,
       "rr2": 3.0
     },
     "sell": {
-      "entry": 70305.0,
-      "sl": 70369.29,
-      "tp1": 70208.57,
-      "tp2": 70112.14,
+      "entry": 70235.0,
+      "sl": 70307.86,
+      "tp1": 70125.71,
+      "tp2": 70016.43,
       "rr1": 1.5,
       "rr2": 3.0
     }
   },
-  "daily_change": -20.0,
-  "daily_change_pct": -0.03,
+  "daily_change": -90.0,
+  "daily_change_pct": -0.13,
   "candles": [
-    {
-      "time": "2026-07-06 22:00",
-      "open": 70085.0,
-      "high": 70100.0,
-      "low": 70005.0,
-      "close": 70030.0,
-      "ma5": 70048.0,
-      "ma25": 70035.0,
-      "rsi": 46.6,
-      "macd": 11.6,
-      "macd_signal": 15.17,
-      "macd_hist": -3.57,
-      "bb_upper": 70142.49,
-      "bb_lower": 69969.51
-    },
     {
       "time": "2026-07-06 22:05",
       "open": 70035.0,
@@ -1545,6 +1532,21 @@
       "macd_hist": -0.5,
       "bb_upper": 70354.51,
       "bb_lower": 70239.99
+    },
+    {
+      "time": "2026-07-07 07:45",
+      "open": 70265.0,
+      "high": 70265.0,
+      "low": 70235.0,
+      "close": 70235.0,
+      "ma5": 70283.0,
+      "ma25": 70306.0,
+      "rsi": 40.7,
+      "macd": -8.09,
+      "macd_signal": -4.1,
+      "macd_hist": -3.98,
+      "bb_upper": 70346.69,
+      "bb_lower": 70235.31
     }
   ],
   "data_source": "NIY=F",
@@ -1554,8 +1556,8 @@
       "signal": "様子見",
       "score": 0,
       "score_normalized": 0,
-      "close": 70305.0,
-      "time": "2026-07-07 07:30",
+      "close": 70235.0,
+      "time": "2026-07-07 07:45",
       "data_source": "NIY=F"
     },
     "1h": {
@@ -1563,7 +1565,7 @@
       "signal": "様子見",
       "score": -1.5,
       "score_normalized": -21,
-      "close": 70305.0,
+      "close": 70235.0,
       "time": "2026-07-07 07:00",
       "data_source": "NIY=F"
     }
@@ -1574,12 +1576,12 @@
       {
         "time": "2026-07-30 03:00",
         "label": "FOMC政策金利発表",
-        "hours_until": 547.3
+        "hours_until": 547.2
       },
       {
         "time": "2026-07-31 12:00",
         "label": "日銀金融政策決定会合(結果発表・目安)",
-        "hours_until": 580.3
+        "hours_until": 580.2
       },
       {
         "time": "2026-08-07 21:30",
@@ -1594,7 +1596,7 @@
       {
         "time": "2026-09-17 03:00",
         "label": "FOMC政策金利発表",
-        "hours_until": 1723.3
+        "hours_until": 1723.2
       }
     ],
     "warning": false,
