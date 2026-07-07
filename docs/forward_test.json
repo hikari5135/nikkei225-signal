@@ -1,70 +1,86 @@
 {
-  "generated_at": "2026-07-06T05:03:05.985376+00:00",
-  "total_history_points": 44,
-  "total_signals": 2,
+  "generated_at": "2026-07-07T04:42:25.243779+00:00",
+  "total_history_points": 181,
+  "total_signals": 5,
   "overall": {
     "30min": {
       "買い": {
-        "n": 1,
-        "win": 1,
+        "n": 2,
+        "win": 2,
         "lose": 0,
         "flat": 0,
         "win_rate": 100.0,
-        "avg_change_points": 120.0,
+        "avg_change_points": 90.0,
         "sufficient_data": false
       },
       "売り": {
-        "n": 1,
+        "n": 3,
         "win": 0,
-        "lose": 1,
+        "lose": 3,
         "flat": 0,
         "win_rate": 0.0,
-        "avg_change_points": -255.0,
+        "avg_change_points": -111.67,
         "sufficient_data": false
       }
     },
     "60min": {
       "買い": {
-        "n": 1,
+        "n": 2,
         "win": 1,
         "lose": 0,
-        "flat": 0,
-        "win_rate": 100.0,
-        "avg_change_points": 420.0,
+        "flat": 1,
+        "win_rate": 50.0,
+        "avg_change_points": 210.0,
         "sufficient_data": false
       },
       "売り": {
-        "n": 1,
-        "win": 0,
-        "lose": 1,
+        "n": 3,
+        "win": 1,
+        "lose": 2,
         "flat": 0,
-        "win_rate": 0.0,
-        "avg_change_points": -85.0,
+        "win_rate": 33.3,
+        "avg_change_points": -23.33,
         "sufficient_data": false
       }
     },
     "120min": {
       "買い": {
-        "n": 0,
-        "win": 0,
-        "lose": 0,
+        "n": 2,
+        "win": 1,
+        "lose": 1,
         "flat": 0,
-        "win_rate": null,
-        "avg_change_points": null,
+        "win_rate": 50.0,
+        "avg_change_points": 10.0,
         "sufficient_data": false
       },
       "売り": {
-        "n": 1,
-        "win": 1,
-        "lose": 0,
+        "n": 3,
+        "win": 2,
+        "lose": 1,
         "flat": 0,
-        "win_rate": 100.0,
-        "avg_change_points": 495.0,
+        "win_rate": 66.7,
+        "avg_change_points": 186.67,
         "sufficient_data": false
       }
     }
   },
   "by_hour": [
+    {
+      "label": "0時",
+      "n": 1,
+      "win": 0,
+      "lose": 0,
+      "win_rate": 0.0,
+      "sufficient_data": false
+    },
+    {
+      "label": "5時",
+      "n": 1,
+      "win": 0,
+      "lose": 1,
+      "win_rate": 0.0,
+      "sufficient_data": false
+    },
     {
       "label": "9時",
       "n": 1,
@@ -80,15 +96,31 @@
       "lose": 0,
       "win_rate": 100.0,
       "sufficient_data": false
+    },
+    {
+      "label": "18時",
+      "n": 1,
+      "win": 1,
+      "lose": 0,
+      "win_rate": 100.0,
+      "sufficient_data": false
     }
   ],
   "by_weekday": [
     {
       "label": "月",
-      "n": 2,
-      "win": 1,
+      "n": 3,
+      "win": 2,
       "lose": 1,
-      "win_rate": 50.0,
+      "win_rate": 66.7,
+      "sufficient_data": false
+    },
+    {
+      "label": "火",
+      "n": 2,
+      "win": 0,
+      "lose": 1,
+      "win_rate": 0.0,
       "sufficient_data": false
     }
   ],
