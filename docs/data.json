@@ -1,13 +1,12 @@
 {
-  "updated_at": "2026-07-07T19:20:59.722931+00:00",
-  "latest_time": "2026-07-08 04:10",
-  "latest_close": 67595.0,
+  "updated_at": "2026-07-07T19:25:19.996469+00:00",
+  "latest_time": "2026-07-08 04:15",
+  "latest_close": 67605.0,
   "signal": "様子見",
-  "score": 2.5,
-  "score_normalized": 36,
+  "score": 1.5,
+  "score_normalized": 21,
   "reasons": [
-    "RSI=7.4 (oversold)",
-    "Price <= Bollinger -2sigma (possible rebound)"
+    "RSI=8.2 (oversold)"
   ],
   "stop_price": null,
   "take_profit": null,
@@ -16,54 +15,39 @@
     "MA": 0,
     "RSI": 1.5,
     "MACD": 0,
-    "BB": 1
+    "BB": 0
   },
   "stars": 2,
   "star_label": "弱い買い",
   "current_state": [
-    "MA5(67688)がMA25(68010)を下回っており、短期は下降基調",
-    "RSI=7.4で売られすぎ水準",
+    "MA5(67666)がMA25(67993)を下回っており、短期は下降基調",
+    "RSI=8.2で売られすぎ水準",
     "MACDヒストグラムはマイナス(下降モメンタム)",
-    "価格はボリンジャーバンド-2σ未満で売られすぎ気味"
+    "価格はボリンジャーバンドの通常レンジ内"
   ],
-  "summary": "短期は下降基調、MACDは下向き、RSI(7)が売られすぎ水準のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「売り優勢」。",
-  "atr": 99.29,
+  "summary": "短期は下降基調、MACDは下向き、RSI(8)が売られすぎ水準のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「方向感なし」。",
+  "atr": 101.43,
   "suggested_levels": {
     "buy": {
-      "entry": 67595.0,
-      "sl": 67297.14,
-      "tp1": 68041.79,
-      "tp2": 68488.57,
+      "entry": 67605.0,
+      "sl": 67300.71,
+      "tp1": 68061.43,
+      "tp2": 68517.86,
       "rr1": 1.5,
       "rr2": 3.0
     },
     "sell": {
-      "entry": 67595.0,
-      "sl": 67892.86,
-      "tp1": 67148.21,
-      "tp2": 66701.43,
+      "entry": 67605.0,
+      "sl": 67909.29,
+      "tp1": 67148.57,
+      "tp2": 66692.14,
       "rr1": 1.5,
       "rr2": 3.0
     }
   },
-  "daily_change": -60.0,
-  "daily_change_pct": -0.09,
+  "daily_change": -50.0,
+  "daily_change_pct": -0.07,
   "candles": [
-    {
-      "time": "2026-07-07 19:55",
-      "open": 68415.0,
-      "high": 68415.0,
-      "low": 68400.0,
-      "close": 68405.0,
-      "ma5": 68412.0,
-      "ma25": 68444.0,
-      "rsi": 47.1,
-      "macd": -17.33,
-      "macd_signal": -11.3,
-      "macd_hist": -6.03,
-      "bb_upper": 68572.57,
-      "bb_lower": 68335.43
-    },
     {
       "time": "2026-07-07 20:00",
       "open": 68455.0,
@@ -1537,28 +1521,43 @@
     {
       "time": "2026-07-08 04:10",
       "open": 67620.0,
-      "high": 67645.0,
-      "low": 67590.0,
-      "close": 67595.0,
-      "ma5": 67688.0,
-      "ma25": 68010.0,
-      "rsi": 7.4,
-      "macd": -91.09,
-      "macd_signal": -30.74,
-      "macd_hist": -60.36,
-      "bb_upper": 68393.46,
-      "bb_lower": 67597.04
+      "high": 67670.0,
+      "low": 67580.0,
+      "close": 67635.0,
+      "ma5": 67696.0,
+      "ma25": 68011.6,
+      "rsi": 7.8,
+      "macd": -87.9,
+      "macd_signal": -30.1,
+      "macd_hist": -57.81,
+      "bb_upper": 68387.32,
+      "bb_lower": 67607.18
+    },
+    {
+      "time": "2026-07-08 04:15",
+      "open": 67645.0,
+      "high": 67650.0,
+      "low": 67580.0,
+      "close": 67605.0,
+      "ma5": 67666.0,
+      "ma25": 67992.6,
+      "rsi": 8.2,
+      "macd": -100.1,
+      "macd_signal": -44.1,
+      "macd_hist": -56.0,
+      "bb_upper": 68386.45,
+      "bb_lower": 67551.05
     }
   ],
   "data_source": "NIY=F",
   "timeframes": {
     "15m": {
       "label": "15分足",
-      "signal": "売り",
-      "score": -4.5,
-      "score_normalized": -64,
-      "close": 67595.0,
-      "time": "2026-07-08 04:00",
+      "signal": "様子見",
+      "score": 0,
+      "score_normalized": 0,
+      "close": 67605.0,
+      "time": "2026-07-08 04:15",
       "data_source": "NIY=F"
     },
     "1h": {
@@ -1566,12 +1565,12 @@
       "signal": "様子見",
       "score": 1.5,
       "score_normalized": 21,
-      "close": 67595.0,
+      "close": 67605.0,
       "time": "2026-07-08 04:00",
       "data_source": "NIY=F"
     }
   },
-  "composite": "売り優勢",
+  "composite": "方向感なし",
   "economic_events": {
     "upcoming_events": [
       {
@@ -1587,12 +1586,12 @@
       {
         "time": "2026-08-07 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 737.3
+        "hours_until": 737.2
       },
       {
         "time": "2026-09-04 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 1409.3
+        "hours_until": 1409.2
       },
       {
         "time": "2026-09-17 03:00",
