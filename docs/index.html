@@ -108,9 +108,9 @@
     margin-bottom: 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  .reasons h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .reasons ul { margin: 0; padding-left: 18px; }
-  .reasons li { margin-bottom: 10px; font-size: 18px; line-height: 1.8; }
+  .reasons h2 { font-size: 14px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .reasons ul { margin: 0; padding-left: 20px; }
+  .reasons li { margin-bottom: 8px; font-size: 16px; line-height: 1.6; }
 
   .timeframe-card {
     background: var(--panel);
@@ -558,6 +558,8 @@
   </div>
 
   <div id="daily-single-backtest-section"></div>
+
+  <div id="backtest-1h-section"></div>
 
   <div id="final-summary-section"></div>
 
@@ -1116,6 +1118,84 @@ function renderEquityCurve(curve) {
 loadBacktest();
 loadForwardTest();
 loadDailySingleEntryBacktest();
+loadBacktest1h();
+
+async function loadBacktest1h() {
+  const section = document.getElementById('backtest-1h-section');
+  try {
+    const res = await fetch('backtest_1h.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+    const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(1時間足・長期版 約2年)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}</div>
+        ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades || 0}勝${s.lose_trades || 0}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    if (data.equity_curve && data.equity_curve.length > 0) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chart-card';
+      wrapper.innerHTML = `
+        <h2>資産推移(1時間足・長期版) / ドローダウン</h2>
+        <canvas id="equityChart1h"></canvas>
+      `;
+      section.appendChild(wrapper);
+
+      const curve = data.equity_curve;
+      const labels = curve.map(c => c.trade_no);
+      const cumPnl = curve.map(c => c.cumulative_pnl);
+      const drawdown = curve.map(c => c.drawdown);
+      const gridColor = '#dde1e6';
+      const textColor = '#6b7280';
+
+      if (window._equityChart1h) {
+        window._equityChart1h.destroy();
+      }
+      window._equityChart1h = new Chart(document.getElementById('equityChart1h'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: '累積損益(pt)', data: cumPnl, borderColor: '#1d8a45', backgroundColor: 'rgba(29,138,69,0.08)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+            { label: 'ドローダウン(pt)', data: drawdown, borderColor: '#c0362c', backgroundColor: 'rgba(192,54,44,0.08)', fill: true, borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor }, title: { display: true, text: 'トレード回数', color: textColor, font: { size: 10 } } },
+            y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+  } catch (err) {
+  }
+}
 
 async function loadDailySingleEntryBacktest() {
   const section = document.getElementById('daily-single-backtest-section');
