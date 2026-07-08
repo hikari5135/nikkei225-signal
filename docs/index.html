@@ -574,6 +574,13 @@ async function loadDashboard() {
   const content = document.getElementById('content');
   const updatedEl = document.getElementById('updated');
 
+  // グラフの描画をくっきりさせる(高解像度ディスプレイ対策)
+  if (window.Chart && !window._chartDefaultsApplied) {
+    Chart.defaults.devicePixelRatio = (window.devicePixelRatio || 1) * 2;
+    Chart.defaults.font.size = 12;
+    window._chartDefaultsApplied = true;
+  }
+
   try {
     const res = await fetch('data.json?t=' + Date.now());
     if (!res.ok) throw new Error('データファイルが見つかりません');
@@ -873,6 +880,11 @@ async function loadDashboard() {
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { labels: { color: textColor, font: { size: 11 } } },
+          tooltip: {
+            titleFont: { size: 13 },
+            bodyFont: { size: 13 },
+            padding: 10,
+          },
           annotation: { annotations }
         },
         scales: commonScales
@@ -887,7 +899,10 @@ async function loadDashboard() {
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { titleFont: { size: 13 }, bodyFont: { size: 13 }, padding: 10 },
+        },
         scales: {
           x: commonScales.x,
           y: { min: 0, max: 100, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
@@ -907,7 +922,10 @@ async function loadDashboard() {
       },
       options: {
         responsive: true,
-        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+        plugins: {
+          legend: { labels: { color: textColor, font: { size: 11 } } },
+          tooltip: { titleFont: { size: 13 }, bodyFont: { size: 13 }, padding: 10 },
+        },
         scales: commonScales
       }
     }));
