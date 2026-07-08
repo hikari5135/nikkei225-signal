@@ -1,23 +1,23 @@
 {
-  "updated_at": "2026-07-08T04:08:54.601627+00:00",
+  "updated_at": "2026-07-08T07:12:53.452709+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-04-27 15:00",
-  "period_end": "2026-07-08 12:55",
+  "period_end": "2026-07-08 16:00",
   "total_days": 60,
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)。1日1回・その日最初のシグナルのみ採用し、当日中に強制決済するルールです。",
   "summary": {
     "total_trades": 59,
-    "win_trades": 28,
-    "lose_trades": 31,
-    "win_rate": 47.5,
-    "total_pnl": -7475.0,
-    "avg_win": 739.29,
-    "avg_loss": -908.87,
+    "win_trades": 27,
+    "lose_trades": 32,
+    "win_rate": 45.8,
+    "total_pnl": -8760.0,
+    "avg_win": 753.15,
+    "avg_loss": -909.22,
     "max_win": 2555.0,
     "max_loss": -3940.0,
     "max_drawdown": -14015.0,
-    "expectancy": -126.69,
-    "profit_factor": 0.73
+    "expectancy": -148.47,
+    "profit_factor": 0.7
   },
   "trades": [
     {
@@ -416,9 +416,9 @@
       "side": "long",
       "entry_price": 67750.0,
       "entry_time": "2026-07-08 01:05",
-      "exit_price": 68115.0,
-      "exit_time": "2026-07-08 12:55",
-      "pnl": 365.0
+      "exit_price": 66830.0,
+      "exit_time": "2026-07-08 16:00",
+      "pnl": -920.0
     }
   ],
   "equity_curve": [
@@ -772,9 +772,9 @@
     },
     {
       "trade_no": 59,
-      "exit_time": "2026-07-08 12:55",
-      "cumulative_pnl": -7475.0,
-      "drawdown": -7225.0
+      "exit_time": "2026-07-08 16:00",
+      "cumulative_pnl": -8760.0,
+      "drawdown": -8510.0
     }
   ]
 }
