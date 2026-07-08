@@ -39,6 +39,20 @@
   }
   body.force-vertical .two-col-grid { grid-template-columns: 1fr; }
 
+  .three-col-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .three-col-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    .three-col-grid { grid-template-columns: 1fr; }
+  }
+  body.force-vertical .three-col-grid { grid-template-columns: 1fr; }
+
   .layout-toggle-btn {
     padding: 6px 14px;
     border-radius: 6px;
@@ -552,14 +566,12 @@
     <div id="position-section"></div>
   </div>
 
-  <div class="two-col-grid">
+  <div class="three-col-grid">
     <div id="backtest-section"></div>
     <div id="forward-test-section"></div>
+    <div id="daily-single-backtest-section"></div>
+    <div id="backtest-1h-section"></div>
   </div>
-
-  <div id="daily-single-backtest-section"></div>
-
-  <div id="backtest-1h-section"></div>
 
   <div id="final-summary-section"></div>
 
