@@ -1,84 +1,51 @@
 {
-  "updated_at": "2026-07-08T14:41:01.948335+00:00",
-  "latest_time": "2026-07-08 23:30",
-  "latest_close": 67185.0,
-  "signal": "売り",
-  "score": -3.0,
-  "score_normalized": -43,
-  "reasons": [
-    "RSI=74.6 (overbought)",
-    "MACD histogram turned negative"
-  ],
-  "stop_price": 67707.86,
-  "take_profit": 66139.29,
-  "risk_reward": 2.0,
+  "updated_at": "2026-07-08T14:51:01.148214+00:00",
+  "latest_time": "2026-07-08 23:40",
+  "latest_close": 67160.0,
+  "signal": "様子見",
+  "score": 0,
+  "score_normalized": 0,
+  "reasons": [],
+  "stop_price": null,
+  "take_profit": null,
+  "risk_reward": null,
   "score_breakdown": {
     "MA": 0,
-    "RSI": -1.5,
-    "MACD": -1.5,
+    "RSI": 0,
+    "MACD": 0,
     "BB": 0
   },
-  "stars": 3,
-  "star_label": "売り",
+  "stars": 1,
+  "star_label": "様子見",
   "current_state": [
-    "MA5(67194)がMA25(66934)を上回っており、短期は上昇基調",
-    "RSI=74.6で過熱(買われすぎ)水準",
+    "MA5(67203)がMA25(66980)を上回っており、短期は上昇基調",
+    "RSI=57.9で中立圏",
     "MACDヒストグラムはマイナス(下降モメンタム)",
     "価格はボリンジャーバンドの通常レンジ内"
   ],
-  "summary": "短期は上昇基調、MACDは下向き、RSI(75)が過熱気味のため「売り」と判定。 1時間足では「様子見」。 複合判定は「売り優勢」。",
-  "atr": 174.29,
+  "summary": "短期は上昇基調、MACDは下向き、RSI(58)は中立圏のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「方向感なし」。",
+  "atr": 163.57,
   "suggested_levels": {
     "buy": {
-      "entry": 67185.0,
-      "sl": 66662.14,
-      "tp1": 67969.29,
-      "tp2": 68753.57,
+      "entry": 67160.0,
+      "sl": 66669.29,
+      "tp1": 67896.07,
+      "tp2": 68632.14,
       "rr1": 1.5,
       "rr2": 3.0
     },
     "sell": {
-      "entry": 67185.0,
-      "sl": 67707.86,
-      "tp1": 66400.71,
-      "tp2": 65616.43,
+      "entry": 67160.0,
+      "sl": 67650.71,
+      "tp1": 66423.93,
+      "tp2": 65687.86,
       "rr1": 1.5,
       "rr2": 3.0
     }
   },
-  "daily_change": -470.0,
-  "daily_change_pct": -0.69,
+  "daily_change": -495.0,
+  "daily_change_pct": -0.73,
   "candles": [
-    {
-      "time": "2026-07-08 15:15",
-      "open": 67270.0,
-      "high": 67300.0,
-      "low": 67215.0,
-      "close": 67280.0,
-      "ma5": 67344.0,
-      "ma25": 67661.6,
-      "rsi": 21.2,
-      "macd": -170.3,
-      "macd_signal": -138.8,
-      "macd_hist": -31.49,
-      "bb_upper": 68035.88,
-      "bb_lower": 67181.12
-    },
-    {
-      "time": "2026-07-08 15:20",
-      "open": 67265.0,
-      "high": 67325.0,
-      "low": 67235.0,
-      "close": 67325.0,
-      "ma5": 67312.0,
-      "ma25": 67639.0,
-      "rsi": 23.4,
-      "macd": -168.69,
-      "macd_signal": -144.78,
-      "macd_hist": -23.91,
-      "bb_upper": 68022.29,
-      "bb_lower": 67148.71
-    },
     {
       "time": "2026-07-08 15:25",
       "open": 67325.0,
@@ -1537,17 +1504,47 @@
     {
       "time": "2026-07-08 23:30",
       "open": 67185.0,
-      "high": 67230.0,
+      "high": 67325.0,
       "low": 67145.0,
-      "close": 67185.0,
-      "ma5": 67194.0,
-      "ma25": 66934.0,
-      "rsi": 74.6,
-      "macd": 177.92,
-      "macd_signal": 184.13,
-      "macd_hist": -6.21,
-      "bb_upper": 67448.15,
-      "bb_lower": 66558.35
+      "close": 67280.0,
+      "ma5": 67213.0,
+      "ma25": 66937.8,
+      "rsi": 77.7,
+      "macd": 185.49,
+      "macd_signal": 185.64,
+      "macd_hist": -0.15,
+      "bb_upper": 67462.99,
+      "bb_lower": 66553.01
+    },
+    {
+      "time": "2026-07-08 23:35",
+      "open": 67260.0,
+      "high": 67270.0,
+      "low": 67130.0,
+      "close": 67130.0,
+      "ma5": 67209.0,
+      "ma25": 66959.0,
+      "rsi": 67.0,
+      "macd": 171.11,
+      "macd_signal": 182.74,
+      "macd_hist": -11.63,
+      "bb_upper": 67447.67,
+      "bb_lower": 66622.33
+    },
+    {
+      "time": "2026-07-08 23:40",
+      "open": 67130.0,
+      "high": 67175.0,
+      "low": 67120.0,
+      "close": 67160.0,
+      "ma5": 67203.0,
+      "ma25": 66980.2,
+      "rsi": 57.9,
+      "macd": 160.28,
+      "macd_signal": 178.24,
+      "macd_hist": -17.97,
+      "bb_upper": 67444.47,
+      "bb_lower": 66670.03
     }
   ],
   "data_source": "NIY=F",
@@ -1557,7 +1554,7 @@
       "signal": "様子見",
       "score": -1.5,
       "score_normalized": -21,
-      "close": 67185.0,
+      "close": 67160.0,
       "time": "2026-07-08 23:30",
       "data_source": "NIY=F"
     },
@@ -1566,38 +1563,38 @@
       "signal": "様子見",
       "score": 1.5,
       "score_normalized": 21,
-      "close": 67185.0,
+      "close": 67160.0,
       "time": "2026-07-08 23:00",
       "data_source": "NIY=F"
     }
   },
-  "composite": "売り優勢",
+  "composite": "方向感なし",
   "economic_events": {
     "upcoming_events": [
       {
         "time": "2026-07-30 03:00",
         "label": "FOMC政策金利発表",
-        "hours_until": 507.5
+        "hours_until": 507.3
       },
       {
         "time": "2026-07-31 12:00",
         "label": "日銀金融政策決定会合(結果発表・目安)",
-        "hours_until": 540.5
+        "hours_until": 540.3
       },
       {
         "time": "2026-08-07 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 718.0
+        "hours_until": 717.8
       },
       {
         "time": "2026-09-04 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 1390.0
+        "hours_until": 1389.8
       },
       {
         "time": "2026-09-17 03:00",
         "label": "FOMC政策金利発表",
-        "hours_until": 1683.5
+        "hours_until": 1683.3
       }
     ],
     "warning": false,
