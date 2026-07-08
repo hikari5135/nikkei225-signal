@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日経225 デイトレシグナル</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<style>
+  :root {
+    --bg: #eef0f2;
+    --panel: #ffffff;
+    --border: #d8dce1;
+    --text: #20242b;
+    --muted: #6b7280;
+    --buy: #1d8a45;
+    --sell: #c0362c;
+    --hold: #6b7280;
+    --accent: #3f6fd1;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    padding: 24px;
+  }
+  .wrap { max-width: 1300px; margin: 0 auto; }
+  .two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .two-col-grid { grid-template-columns: 1fr; }
+  }
+  body.force-vertical .two-col-grid { grid-template-columns: 1fr; }
+
+  .layout-toggle-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .layout-toggle-btn:hover { background: var(--bg); }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  .updated {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  .signal-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .signal-badge {
+    font-size: 28px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .signal-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); border: 1px solid var(--buy); }
+  .signal-badge.sell { background: rgba(218,54,51,0.15); color: var(--sell); border: 1px solid var(--sell); }
+  .signal-badge.hold { background: rgba(110,118,129,0.15); color: var(--hold); border: 1px solid var(--hold); }
+
+  .signal-meta { flex: 1; min-width: 200px; }
+  .price { font-size: 26px; font-weight: 600; font-family: var(--mono); }
+  .price-time { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .score { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: var(--mono); }
+
+  .reasons {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .reasons h2 { font-size: 14px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .reasons ul { margin: 0; padding-left: 20px; }
+  .reasons li { margin-bottom: 8px; font-size: 16px; line-height: 1.6; }
+
+  .timeframe-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .timeframe-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .composite-label { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .tf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .tf-box {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+  }
+  .tf-box-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .tf-box-signal { font-size: 15px; font-weight: 700; }
+  .tf-box-signal.buy { color: var(--buy); }
+  .tf-box-signal.sell { color: var(--sell); }
+  .tf-box-signal.hold { color: var(--hold); }
+  .tf-box-score { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
+  .chart-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .chart-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  canvas { max-height: 260px; }
+
+  .disclaimer {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+
+  .loading, .error {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+  }
+  .error { color: var(--sell); }
+
+  .backtest-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .backtest-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .backtest-period { font-size: 12px; color: var(--muted); margin-bottom: 12px; font-family: var(--mono); }
+  .backtest-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+  }
+  .stat-box { text-align: center; }
+  .stat-value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+  .stat-value.pos { color: var(--buy); }
+  .stat-value.neg { color: var(--sell); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .event-banner {
+    background: #fff8e1;
+    border: 1px solid #f0c14b;
+    color: #7a5b00;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .event-info {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    text-align: right;
+  }
+
+  .position-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .position-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .position-form { display: flex; flex-direction: column; gap: 10px; }
+  .position-form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .position-form label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+  .position-form input[type="number"],
+  .position-form input[type="text"],
+  .position-form textarea,
+  .position-form select {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  .position-form textarea { width: 100%; min-height: 50px; resize: vertical; }
+  .position-btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .position-btn.secondary { background: #fff; color: var(--accent); }
+  .position-btn.danger { background: #fff; color: var(--sell); border-color: var(--sell); }
+  .position-btn:hover { opacity: 0.85; }
+  .position-active { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-bottom: 12px; }
+  .position-side-badge { font-weight: 700; padding: 5px 14px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
+  .position-side-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
+  .position-side-badge.sell { background: rgba(218,54,51,0.15); color: var(--sell); }
+  .position-pnl-block { text-align: left; }
+  .position-pnl { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+  .position-pnl.pos { color: var(--buy); }
+  .position-pnl.neg { color: var(--sell); }
+  .position-pnl-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .position-meta-small { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .position-memo-display {
+    font-size: 13px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 6px;
+    white-space: pre-wrap;
+  }
+  .trade-history { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .trade-history h3 { font-size: 12px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .trade-history table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .trade-history th, .trade-history td { padding: 6px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+  .trade-history th { color: var(--muted); font-weight: 600; }
+  .trade-history td.pnl-pos { color: var(--buy); font-family: var(--mono); }
+  .trade-history td.pnl-neg { color: var(--sell); font-family: var(--mono); }
+  .signal-card.buy-card { border-left: 6px solid var(--buy); }
+  .signal-card.sell-card { border-left: 6px solid var(--sell); }
+  .signal-card.hold-card { border-left: 6px solid var(--hold); }
+
+  .stars { font-size: 16px; letter-spacing: 2px; margin-top: 4px; }
+  .stars .filled { color: #f0b400; }
+  .stars .empty { color: #d8dce1; }
+  .star-label { font-size: 12px; color: var(--muted); margin-left: 6px; }
+
+  .breakdown-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .breakdown-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 10px;
+  }
+  .breakdown-item { text-align: center; border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; }
+  .breakdown-item .bd-label { font-size: 11px; color: var(--muted); }
+  .breakdown-item .bd-value { font-size: 16px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .breakdown-item .bd-value.pos { color: var(--buy); }
+  .breakdown-item .bd-value.neg { color: var(--sell); }
+  .breakdown-item .bd-value.zero { color: var(--muted); }
+  .breakdown-item.total { border-color: var(--accent); }
+
+  .risk-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .risk-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .risk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 10px;
+    text-align: center;
+  }
+  .risk-item .risk-label { font-size: 11px; color: var(--muted); }
+  .risk-item .risk-value { font-size: 17px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .risk-item .risk-value.entry { color: var(--text); }
+  .risk-item .risk-value.sl { color: var(--sell); }
+  .risk-item .risk-value.tp { color: var(--buy); }
+  .risk-item .risk-value.rr { color: var(--accent); }
+
+  .signal-history-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .signal-history-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .signal-history-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+  .signal-history-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 8px; border-radius: 6px; background: var(--bg); }
+  .signal-history-row .sh-time { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .signal-history-row .sh-signal.buy { color: var(--buy); font-weight: 700; }
+  .signal-history-row .sh-signal.sell { color: var(--sell); font-weight: 700; }
+  .signal-history-row .sh-signal.hold { color: var(--hold); }
+  .no-position-note { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+
+  .summary-banner {
+    background: linear-gradient(135deg, #eef4ff, #f7f9fc);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .summary-banner .summary-label {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .tf-box-signal.buy::before { content: "🟢 "; }
+  .tf-box-signal.sell::before { content: "🔴 "; }
+  .tf-box-signal.hold::before { content: "🟡 "; }
+
+  .breakdown-grid.emphasized { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); }
+  .breakdown-item { font-size: 12px; }
+  .breakdown-item .bd-value { font-size: 14px; }
+  .breakdown-total-box {
+    text-align: center;
+    padding: 14px 10px;
+    margin-bottom: 12px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    background: #f5f8ff;
+  }
+  .breakdown-total-box .bt-stars { font-size: 20px; letter-spacing: 3px; margin-bottom: 4px; }
+  .breakdown-total-box .bt-value { font-size: 28px; font-weight: 800; font-family: var(--mono); }
+  .breakdown-total-box .bt-value.pos { color: var(--buy); }
+  .breakdown-total-box .bt-value.neg { color: var(--sell); }
+  .breakdown-total-box .bt-value.zero { color: var(--muted); }
+  .breakdown-total-box .bt-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .stat-value.highlight { font-size: 24px; }
+
+  .position-current-price { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .position-sltp-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
+  .position-sltp-row .sltp-item { color: var(--muted); }
+  .position-sltp-row .sltp-item .sltp-value { font-weight: 700; font-family: var(--mono); }
+  .position-sltp-row .sltp-item.sl .sltp-value { color: var(--sell); }
+  .position-sltp-row .sltp-item.tp .sltp-value { color: var(--buy); }
+
+  .signal-card.composite-buy-bg { background: linear-gradient(135deg, #eafaf0, #ffffff); }
+  .signal-card.composite-sell-bg { background: linear-gradient(135deg, #fdecea, #ffffff); }
+  .signal-card.composite-hold-bg { background: linear-gradient(135deg, #fffbe8, #ffffff); }
+
+  .score-points { font-size: 20px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+  .score-points.pos { color: var(--buy); }
+  .score-points.neg { color: var(--sell); }
+  .score-points.zero { color: var(--muted); }
+  .bt-points { font-size: 15px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
+  .tf-bar-track { width: 100%; height: 6px; background: #e5e8ec; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .tf-bar-fill { height: 100%; border-radius: 3px; }
+  .tf-bar-fill.buy { background: var(--buy); }
+  .tf-bar-fill.sell { background: var(--sell); }
+  .tf-bar-fill.hold { background: var(--hold); }
+
+  .suggested-levels {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+  .suggested-levels-title { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .suggested-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    text-align: center;
+  }
+  .suggested-grid .sg-label { font-size: 10px; color: var(--muted); }
+  .suggested-grid .sg-value { font-size: 14px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .suggested-grid .sg-value.entry { color: var(--text); }
+  .suggested-grid .sg-value.sl { color: var(--sell); }
+  .suggested-grid .sg-value.tp { color: var(--buy); }
+  .suggested-grid .sg-value.rr { color: var(--accent); }
+
+  .updated-live { display: inline-flex; align-items: center; gap: 4px; }
+  .updated-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .updated-dot.fresh { background: var(--buy); }
+  .updated-dot.stale { background: #f0b400; }
+  .updated-dot.old { background: var(--muted); }
+
+  .stars.neutral { font-size: 13px; color: var(--muted); font-style: italic; }
+  .stars .empty { color: #e8eaed; }
+  .stars .filled { color: #d99a00; }
+
+  .summary-banner {
+    font-weight: 500;
+  }
+  .summary-banner .summary-label { color: #2c4fa8; }
+
+  .bd-value.zero-dash { color: var(--muted); font-weight: 400; }
+
+  .daily-change { font-size: 15px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+  .daily-change.pos { color: var(--buy); }
+  .daily-change.neg { color: var(--sell); }
+  .daily-change.zero { color: var(--muted); }
+
+  .composite-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .composite-chip.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
+  .composite-chip.sell { background: rgba(218,54,51,0.15); color: var(--sell); }
+  .composite-chip.hold { background: rgba(240,180,0,0.18); color: #8a6400; }
+
+  .summary-final-card {
+    background: linear-gradient(135deg, #f5f8ff, #ffffff);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .summary-final-card h2 { font-size: 13px; color: var(--accent); margin: 0 0 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .summary-final-stars { font-size: 22px; letter-spacing: 3px; margin-bottom: 8px; }
+  .summary-final-line { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .summary-final-card ul { margin: 0; padding-left: 18px; }
+  .summary-final-card li { font-size: 13px; line-height: 1.6; color: var(--text); }
+
+  .stat-box .stat-emoji { font-size: 14px; margin-right: 2px; }
+
+  .forward-test-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .forward-test-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ft-note { font-size: 13px; color: var(--muted); }
+  .ft-horizon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ft-horizon-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .ft-horizon-title { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .ft-side-row { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; }
+  .ft-side-row .ft-side-label.buy { color: var(--buy); font-weight: 700; }
+  .ft-side-row .ft-side-label.sell { color: var(--sell); font-weight: 700; }
+  .ft-side-row .ft-winrate { font-family: var(--mono); font-weight: 700; }
+  .ft-insufficient { color: var(--muted); font-style: italic; font-size: 11px; }
+
+  .ft-breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .ft-breakdown-col h3 { font-size: 12px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .ft-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+  .ft-bar-row .ft-bar-label { width: 46px; flex-shrink: 0; color: var(--muted); font-family: var(--mono); }
+  .ft-bar-row .ft-bar-track { flex: 1; height: 14px; background: #eef0f2; border-radius: 4px; overflow: hidden; position: relative; }
+  .ft-bar-row .ft-bar-fill { height: 100%; border-radius: 4px; }
+  .ft-bar-row .ft-bar-fill.high { background: var(--buy); }
+  .ft-bar-row .ft-bar-fill.mid { background: #f0b400; }
+  .ft-bar-row .ft-bar-fill.low { background: var(--sell); }
+  .ft-bar-row .ft-bar-fill.na { background: var(--border); }
+  .ft-bar-row .ft-bar-value { width: 60px; flex-shrink: 0; text-align: right; font-family: var(--mono); color: var(--muted); }
+
+  @media (max-width: 640px) {
+    .ft-breakdown-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .price { font-size: 22px; }
+    .signal-badge { font-size: 22px; padding: 8px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>日経225 デイトレシグナル</h1>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="toggleLayout()">レイアウト: 横並び</button>
+      <div class="updated" id="updated">読み込み中...</div>
+    </div>
+  </header>
+
+  <div id="event-section"></div>
+
+  <div id="summary-section"></div>
+
+  <div id="content">
+    <div class="loading">データを読み込んでいます...</div>
+  </div>
+
+  <div class="two-col-grid">
+    <div id="signal-history-section"></div>
+    <div id="position-section"></div>
+  </div>
+
+  <div class="two-col-grid">
+    <div id="backtest-section"></div>
+    <div id="forward-test-section"></div>
+  </div>
+
+  <div id="daily-single-backtest-section"></div>
+
+  <div id="backtest-1h-section"></div>
+
+  <div id="final-summary-section"></div>
+
+  <div class="disclaimer">
+    テクニカル指標による参考情報です。実際の売買は自己責任で判断してください。<br>
+    本ツールは投資助言ではありません。
+  </div>
+</div>
+
+<script>
+async function loadDashboard() {
+  const content = document.getElementById('content');
+  const updatedEl = document.getElementById('updated');
+
+  try {
+    const res = await fetch('data.json?t=' + Date.now());
+    if (!res.ok) throw new Error('データファイルが見つかりません');
+    const data = await res.json();
+
+    const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
+    const sourceLabel = data.data_source === 'NIY=F' ? 'CME日経225先物(円建て)' : '日経平均株価指数';
+    window._lastUpdatedAt = new Date(data.updated_at).getTime();
+    updatedEl.innerHTML = '更新: ' + new Date(data.updated_at).toLocaleString('ja-JP') + ` <span id="countdown"></span><br>データ元: ${sourceLabel} <span class="updated-live" id="updated-live"></span>`;
+    updateLiveAgo();
+
+    window._latestData = data;
+
+    // 経済指標カレンダーの表示(警告 or 次のイベント案内)
+    const eventSection = document.getElementById('event-section');
+    const ee = data.economic_events;
+    if (ee && ee.warning && ee.warning_events.length > 0) {
+      const labels = ee.warning_events.map(e => `${e.time} ${e.label}`).join(' / ');
+      eventSection.innerHTML = `<div class="event-banner">⚠ 重要指標の発表が近い時間帯です: ${labels}<br>値動きが荒くなりやすいため、シグナルの取り扱いに注意してください。</div>`;
+    } else if (ee && ee.upcoming_events && ee.upcoming_events.length > 0) {
+      const next = ee.upcoming_events[0];
+      const daysUntil = Math.floor(next.hours_until / 24);
+      const hoursRemainder = Math.round(next.hours_until % 24);
+      eventSection.innerHTML = `<div class="event-info">次の重要指標: ${next.time} ${next.label}(${daysUntil}日${hoursRemainder}時間後)</div>`;
+    } else {
+      eventSection.innerHTML = '';
+    }
+
+    // 「今なぜこの判定なのか」サマリーバナー
+    const summarySection = document.getElementById('summary-section');
+    if (data.summary) {
+      summarySection.innerHTML = `
+        <div class="summary-banner">
+          <span class="summary-label">現在の判定理由</span>
+          ${data.summary}
+        </div>
+      `;
+    } else {
+      summarySection.innerHTML = '';
+    }
+
+    // 複数時間軸判定カード(データがある場合のみ表示)
+    let timeframeHtml = '';
+    if (data.composite) {
+      const tf = data.timeframes || {};
+      const tfEntries = [
+        { label: '5分足', signal: data.signal, score: data.score, scoreNorm: data.score_normalized },
+        ...Object.values(tf).map(v => ({ label: v.label, signal: v.signal, score: v.score, scoreNorm: v.score_normalized, error: v.error })),
+      ];
+      const tfBoxes = tfEntries.map(e => {
+        const cls = e.signal === '買い' ? 'buy' : e.signal === '売り' ? 'sell' : 'hold';
+        const scoreText = (e.score !== undefined && e.score !== null)
+          ? 'score: ' + (e.score > 0 ? '+' : '') + e.score
+          : (e.error ? 'データ取得失敗' : '');
+        const barWidth = (e.scoreNorm !== undefined && e.scoreNorm !== null) ? Math.min(100, Math.abs(e.scoreNorm)) : 0;
+        const barHtml = (e.scoreNorm !== undefined && e.scoreNorm !== null) ? `
+          <div class="tf-bar-track"><div class="tf-bar-fill ${cls}" style="width:${barWidth}%"></div></div>
+        ` : '';
+        return `
+          <div class="tf-box">
+            <div class="tf-box-label">${e.label}</div>
+            <div class="tf-box-signal ${cls}">${e.signal || '-'}</div>
+            <div class="tf-box-score">${scoreText}</div>
+            ${barHtml}
+          </div>
+        `;
+      }).join('');
+
+      timeframeHtml = `
+        <div class="timeframe-card">
+          <h2>複数時間軸判定</h2>
+          <div class="composite-label">総合判定: ${data.composite}</div>
+          <div class="tf-grid">${tfBoxes}</div>
+        </div>
+      `;
+    }
+
+    // 星評価の表示用HTML(様子見の時は星ではなく明示テキストにする)
+    const starsCount = data.stars || 0;
+    const isHold = data.signal === '様子見';
+    const starsHtml = isHold
+      ? `<span class="stars neutral">評価対象外(条件未達のため様子見)</span>`
+      : `<span class="stars">${Array.from({length: 5}, (_, i) =>
+          `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
+        ).join('')}<span class="star-label">${data.star_label || ''}</span></span>`;
+
+    // スコア内訳カード(合計を大きく強調)
+    let breakdownHtml = '';
+    if (data.score_breakdown && Object.keys(data.score_breakdown).length > 0) {
+      const bd = data.score_breakdown;
+      const labelMap = { MA: 'MA', RSI: 'RSI', MACD: 'MACD', BB: 'BB' };
+      const items = Object.entries(bd).map(([key, val]) => {
+        const cls = val > 0 ? 'pos' : val < 0 ? 'neg' : 'zero-dash';
+        const displayVal = val === 0 ? '-' : (val > 0 ? '+' + val : val);
+        return `
+          <div class="breakdown-item">
+            <div class="bd-label">${labelMap[key] || key}</div>
+            <div class="bd-value ${cls}">${displayVal}</div>
+          </div>
+        `;
+      }).join('');
+      const totalCls = data.score > 0 ? 'pos' : data.score < 0 ? 'neg' : 'zero';
+      const totalStarsHtml = isHold
+        ? `<div class="stars neutral">評価対象外(条件未達のため様子見)</div>`
+        : `<div class="bt-stars">${Array.from({length: 5}, (_, i) =>
+            `<span class="${i < starsCount ? 'filled' : 'empty'}">★</span>`
+          ).join('')}</div>`;
+      breakdownHtml = `
+        <div class="breakdown-card">
+          <h2>スコア内訳</h2>
+          <div class="breakdown-total-box">
+            ${totalStarsHtml}
+            <div class="bt-value ${totalCls}">${data.score > 0 ? '+' : ''}${data.score}</div>
+            <div class="bt-points">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点 / 100点</div>
+            <div class="bt-label">総合スコア(${data.star_label || ''})</div>
+          </div>
+          <div class="breakdown-grid emphasized">
+            ${items}
+          </div>
+        </div>
+      `;
+    }
+
+    // リスクリワード(Entry/SL/TP/RR)カード
+    let riskHtml = '';
+    if (data.signal !== '様子見' && data.stop_price) {
+      riskHtml = `
+        <div class="risk-card">
+          <h2>リスクリワード</h2>
+          <div class="risk-grid">
+            <div class="risk-item"><div class="risk-label">Entry</div><div class="risk-value entry">${data.latest_close.toLocaleString()}</div></div>
+            <div class="risk-item"><div class="risk-label">SL</div><div class="risk-value sl">${data.stop_price.toLocaleString()}</div></div>
+            ${data.take_profit ? `<div class="risk-item"><div class="risk-label">TP</div><div class="risk-value tp">${data.take_profit.toLocaleString()}</div></div>` : ''}
+            ${data.risk_reward ? `<div class="risk-item"><div class="risk-label">RR</div><div class="risk-value rr">1:${data.risk_reward}</div></div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // 複合判定に応じた背景色分け(買い優勢=緑, 売り優勢=赤, それ以外=黄)
+    let compositeBgClass = 'composite-hold-bg';
+    if (data.composite && data.composite.includes('買い')) {
+      compositeBgClass = 'composite-buy-bg';
+    } else if (data.composite && data.composite.includes('売り')) {
+      compositeBgClass = 'composite-sell-bg';
+    }
+
+    // 判定根拠: イベント的な理由があればそれを、無ければ現在の指標状況を表示
+    const hasReasons = data.reasons && data.reasons.length > 0;
+    const reasonLines = hasReasons ? data.reasons : (data.current_state || []);
+    const reasonsTitle = hasReasons ? '判定根拠' : '現在の状況(様子見のため参考情報)';
+    const reasonsHtml = `
+      <div class="reasons">
+        <h2>${reasonsTitle}</h2>
+        <ul>${reasonLines.map(r => `<li>${r}</li>`).join('')}</ul>
+      </div>
+    `;
+
+    // 複数時間軸判定とスコア内訳を横並びに(両方ある場合のみ)
+    const topGridHtml = (timeframeHtml && breakdownHtml)
+      ? `<div class="two-col-grid">${timeframeHtml}${breakdownHtml}</div>`
+      : (timeframeHtml + breakdownHtml);
+
+    // リスクリワードと判定根拠を横並びに(リスクリワードがある場合のみ)
+    const midGridHtml = riskHtml
+      ? `<div class="two-col-grid">${riskHtml}${reasonsHtml}</div>`
+      : reasonsHtml;
+
+    content.innerHTML = `
+      <div class="signal-card ${signalClass}-card ${compositeBgClass}">
+        <div class="signal-badge ${signalClass}">${data.signal}</div>
+        <div class="signal-meta">
+          <div class="price">¥${data.latest_close.toLocaleString()}</div>
+          ${data.daily_change !== null && data.daily_change !== undefined ? `
+            <div class="daily-change ${data.daily_change > 0 ? 'pos' : data.daily_change < 0 ? 'neg' : 'zero'}">
+              ${data.daily_change > 0 ? '+' : ''}${data.daily_change.toLocaleString()} (${data.daily_change_pct > 0 ? '+' : ''}${data.daily_change_pct}%)
+            </div>
+          ` : ''}
+          <div class="price-time">${data.latest_time} 時点</div>
+          <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
+          <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
+          ${starsHtml}
+          ${data.composite ? `<div><span class="composite-chip ${compositeBgClass === 'composite-buy-bg' ? 'buy' : compositeBgClass === 'composite-sell-bg' ? 'sell' : 'hold'}">総合判定: ${data.composite}</span></div>` : ''}
+        </div>
+      </div>
+
+      ${topGridHtml}
+
+      ${midGridHtml}
+
+      <div class="chart-card">
+        <h2>価格 / 移動平均線</h2>
+        <canvas id="priceChart"></canvas>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h2>RSI</h2>
+          <canvas id="rsiChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h2>MACD</h2>
+          <canvas id="macdChart"></canvas>
+        </div>
+      </div>
+    `;
+
+    const labels = data.candles.map(c => c.time.slice(5));
+    const closes = data.candles.map(c => c.close);
+    const ma5 = data.candles.map(c => c.ma5);
+    const ma25 = data.candles.map(c => c.ma25);
+    const bbUpper = data.candles.map(c => c.bb_upper);
+    const bbLower = data.candles.map(c => c.bb_lower);
+    const rsi = data.candles.map(c => c.rsi);
+    const macd = data.candles.map(c => c.macd);
+    const macdSignal = data.candles.map(c => c.macd_signal);
+    const macdHist = data.candles.map(c => c.macd_hist);
+
+    const gridColor = '#dde1e6';
+    const textColor = '#6b7280';
+    const commonScales = {
+      x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+    };
+
+    if (window._charts) {
+      window._charts.forEach(c => c.destroy());
+    }
+    window._charts = [];
+
+    // チャート上のBuy/Sell・SL/TP注釈
+    const annotations = {};
+    if (data.signal !== '様子見') {
+      const isBuy = data.signal === '買い';
+      annotations.entryPoint = {
+        type: 'point',
+        xValue: labels[labels.length - 1],
+        yValue: data.latest_close,
+        backgroundColor: isBuy ? '#1d8a45' : '#c0362c',
+        borderColor: isBuy ? '#1d8a45' : '#c0362c',
+        radius: 7,
+        pointStyle: 'triangle',
+        rotation: isBuy ? 0 : 180,
+      };
+      if (data.stop_price) {
+        annotations.slLine = {
+          type: 'line',
+          yMin: data.stop_price,
+          yMax: data.stop_price,
+          borderColor: '#c0362c',
+          borderWidth: 1,
+          borderDash: [6, 4],
+          label: {
+            content: 'SL ' + data.stop_price.toLocaleString(),
+            display: true,
+            position: 'end',
+            backgroundColor: '#c0362c',
+            color: '#fff',
+            font: { size: 10 },
+          },
+        };
+      }
+      if (data.take_profit) {
+        annotations.tpLine = {
+          type: 'line',
+          yMin: data.take_profit,
+          yMax: data.take_profit,
+          borderColor: '#1d8a45',
+          borderWidth: 1,
+          borderDash: [6, 4],
+          label: {
+            content: 'TP ' + data.take_profit.toLocaleString(),
+            display: true,
+            position: 'end',
+            backgroundColor: '#1d8a45',
+            color: '#fff',
+            font: { size: 10 },
+          },
+        };
+      }
+    }
+
+    window._charts.push(new Chart(document.getElementById('priceChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '終値', data: closes, borderColor: '#20242b', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+          { label: 'MA5', data: ma5, borderColor: '#4f8ef7', borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          { label: 'MA25', data: ma25, borderColor: '#f0883e', borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          { label: 'BB+2σ', data: bbUpper, borderColor: 'rgba(125,133,144,0.4)', borderWidth: 1, pointRadius: 0, borderDash: [4,4], tension: 0.1 },
+          { label: 'BB-2σ', data: bbLower, borderColor: 'rgba(125,133,144,0.4)', borderWidth: 1, pointRadius: 0, borderDash: [4,4], tension: 0.1 },
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: textColor, font: { size: 11 } } },
+          annotation: { annotations }
+        },
+        scales: commonScales
+      }
+    }));
+
+    window._charts.push(new Chart(document.getElementById('rsiChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'RSI', data: rsi, borderColor: '#a371f7', borderWidth: 1.5, pointRadius: 0, tension: 0.1 }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: commonScales.x,
+          y: { min: 0, max: 100, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+        }
+      }
+    }));
+
+    window._charts.push(new Chart(document.getElementById('macdChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { type: 'bar', label: 'ヒストグラム', data: macdHist, backgroundColor: macdHist.map(v => v >= 0 ? 'rgba(46,160,67,0.6)' : 'rgba(218,54,51,0.6)') },
+          { type: 'line', label: 'MACD', data: macd, borderColor: '#4f8ef7', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+          { type: 'line', label: 'Signal', data: macdSignal, borderColor: '#f0883e', borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+        scales: commonScales
+      }
+    }));
+
+    // ポジション管理UI: ポジション保有中 or 初回のみ全体を再描画(未保存の入力を消さないため)
+    const currentPos = getPosition();
+    if (currentPos || !window._positionUIInitialized) {
+      renderPositionUI();
+      window._positionUIInitialized = true;
+    }
+    updatePositionPnL(data.latest_close);
+
+    // 総合まとめカード(既存の判定理由・複合判定・星評価を再掲するのみ。架空の数値は追加しない)
+    const finalSummarySection = document.getElementById('final-summary-section');
+    if (finalSummarySection) {
+      const finalStarsHtml = isHold
+        ? `<span class="stars neutral">評価対象外(条件未達のため様子見)</span>`
+        : Array.from({length: 5}, (_, i) => `<span class="${i < starsCount ? 'filled' : 'empty'}" style="color:${i < starsCount ? '#d99a00' : '#e8eaed'}">★</span>`).join('');
+      const summaryReasonLines = (data.reasons && data.reasons.length > 0) ? data.reasons : (data.current_state || []);
+      finalSummarySection.innerHTML = `
+        <div class="summary-final-card">
+          <h2>総合まとめ</h2>
+          <div class="summary-final-stars">${finalStarsHtml}</div>
+          <div class="summary-final-line">現在は「${data.signal}」${data.composite ? `(複合判定: ${data.composite})` : ''}</div>
+          ${summaryReasonLines.length > 0 ? `<ul>${summaryReasonLines.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+        </div>
+      `;
+    }
+
+  } catch (err) {
+    content.innerHTML = `<div class="error">データの読み込みに失敗しました: ${err.message}<br>まだGitHub Actionsが一度も実行されていない場合は、手動実行してから再読み込みしてください。</div>`;
+    updatedEl.textContent = '';
+  }
+}
+
+// ===== レイアウト切替(横並び/縦並び) =====
+const LAYOUT_KEY = 'nikkei_layout_mode';
+
+function initLayoutToggle() {
+  const saved = localStorage.getItem(LAYOUT_KEY) || 'horizontal';
+  applyLayout(saved);
+}
+
+function toggleLayout() {
+  const current = localStorage.getItem(LAYOUT_KEY) || 'horizontal';
+  const next = current === 'horizontal' ? 'vertical' : 'horizontal';
+  localStorage.setItem(LAYOUT_KEY, next);
+  applyLayout(next);
+}
+
+function applyLayout(mode) {
+  const btn = document.getElementById('layout-toggle-btn');
+  if (mode === 'vertical') {
+    document.body.classList.add('force-vertical');
+    if (btn) btn.textContent = 'レイアウト: 縦並び';
+  } else {
+    document.body.classList.remove('force-vertical');
+    if (btn) btn.textContent = 'レイアウト: 横並び';
+  }
+}
+
+loadDashboard();
+loadSignalHistory();
+initLayoutToggle();
+
+async function loadSignalHistory() {
+  const section = document.getElementById('signal-history-section');
+  try {
+    const res = await fetch('signal_history.jsonl?t=' + Date.now());
+    if (!res.ok) return;
+    const text = await res.text();
+    const lines = text.trim().split('\n').filter(Boolean);
+    const records = lines.map(line => {
+      try { return JSON.parse(line); } catch (e) { return null; }
+    }).filter(Boolean);
+
+    // シグナルが「様子見」以外を優先し、無ければ全件から直近を表示
+    const meaningful = records.filter(r => r.signal !== '様子見');
+    const displayRecords = (meaningful.length > 0 ? meaningful : records).slice(-15).reverse();
+
+    if (displayRecords.length === 0) {
+      section.innerHTML = '';
+      return;
+    }
+
+    const rows = displayRecords.map(r => {
+      const cls = r.signal === '買い' ? 'buy' : r.signal === '売り' ? 'sell' : 'hold';
+      return `
+        <div class="signal-history-row">
+          <span class="sh-time">${r.time}</span>
+          <span class="sh-signal ${cls}">${r.signal} (${r.score > 0 ? '+' : ''}${r.score})</span>
+        </div>
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      <div class="signal-history-card">
+        <h2>シグナル履歴(直近)</h2>
+        <div class="signal-history-list">${rows}</div>
+      </div>
+    `;
+  } catch (err) {
+    section.innerHTML = '';
+  }
+}
+
+async function loadBacktest() {
+  const section = document.getElementById('backtest-section');
+  try {
+    const res = await fetch('backtest.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+    const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
+
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(同ロジックを過去データに適用した場合)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}</div>
+        ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades}勝${s.lose_trades}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    if (data.equity_curve && data.equity_curve.length > 0) {
+      renderEquityCurve(data.equity_curve);
+    }
+  } catch (err) {
+  }
+}
+
+function renderEquityCurve(curve) {
+  const backtestSection = document.getElementById('backtest-section');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'chart-card';
+  wrapper.innerHTML = `
+    <h2>資産推移(Equity Curve) / ドローダウン</h2>
+    <canvas id="equityChart"></canvas>
+  `;
+  backtestSection.appendChild(wrapper);
+
+  const labels = curve.map(c => c.trade_no);
+  const cumPnl = curve.map(c => c.cumulative_pnl);
+  const drawdown = curve.map(c => c.drawdown);
+
+  const gridColor = '#dde1e6';
+  const textColor = '#6b7280';
+
+  if (window._equityChart) {
+    window._equityChart.destroy();
+  }
+  window._equityChart = new Chart(document.getElementById('equityChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '累積損益(pt)',
+          data: cumPnl,
+          borderColor: '#1d8a45',
+          backgroundColor: 'rgba(29,138,69,0.08)',
+          fill: true,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.1,
+        },
+        {
+          label: 'ドローダウン(pt)',
+          data: drawdown,
+          borderColor: '#c0362c',
+          backgroundColor: 'rgba(192,54,44,0.08)',
+          fill: true,
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0.1,
+          yAxisID: 'y',
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor }, title: { display: true, text: 'トレード回数', color: textColor, font: { size: 10 } } },
+        y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+loadBacktest();
+loadForwardTest();
+loadDailySingleEntryBacktest();
+loadBacktest1h();
+
+async function loadBacktest1h() {
+  const section = document.getElementById('backtest-1h-section');
+  try {
+    const res = await fetch('backtest_1h.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+    const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(1時間足・長期版 約2年)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}</div>
+        ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades || 0}勝${s.lose_trades || 0}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    if (data.equity_curve && data.equity_curve.length > 0) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chart-card';
+      wrapper.innerHTML = `
+        <h2>資産推移(1時間足・長期版) / ドローダウン</h2>
+        <canvas id="equityChart1h"></canvas>
+      `;
+      section.appendChild(wrapper);
+
+      const curve = data.equity_curve;
+      const labels = curve.map(c => c.trade_no);
+      const cumPnl = curve.map(c => c.cumulative_pnl);
+      const drawdown = curve.map(c => c.drawdown);
+      const gridColor = '#dde1e6';
+      const textColor = '#6b7280';
+
+      if (window._equityChart1h) {
+        window._equityChart1h.destroy();
+      }
+      window._equityChart1h = new Chart(document.getElementById('equityChart1h'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: '累積損益(pt)', data: cumPnl, borderColor: '#1d8a45', backgroundColor: 'rgba(29,138,69,0.08)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+            { label: 'ドローダウン(pt)', data: drawdown, borderColor: '#c0362c', backgroundColor: 'rgba(192,54,44,0.08)', fill: true, borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor }, title: { display: true, text: 'トレード回数', color: textColor, font: { size: 10 } } },
+            y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+  } catch (err) {
+  }
+}
+
+async function loadDailySingleEntryBacktest() {
+  const section = document.getElementById('daily-single-backtest-section');
+  try {
+    const res = await fetch('backtest_daily_single_entry.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary;
+
+    const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
+    const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
+    const pfClass = (s.profit_factor || 0) >= 1 ? 'pos' : 'neg';
+    const winRateClass = s.win_rate >= 50 ? 'pos' : '';
+    const winRateEmoji = s.win_rate >= 50 ? '🟢' : s.win_rate >= 40 ? '🟡' : '🔴';
+    const expEmoji = (s.expectancy || 0) > 0 ? '🟢' : '🔴';
+    const pfEmoji = (s.profit_factor || 0) >= 1.5 ? '🟢' : (s.profit_factor || 0) >= 1 ? '🟡' : '🔴';
+
+    section.innerHTML = `
+      <div class="backtest-card">
+        <h2>バックテスト結果(1日1回・当日決済版)</h2>
+        <div class="backtest-period">期間: ${data.period_start} 〜 ${data.period_end}(対象営業日数: ${data.total_days || '-'}日)</div>
+        ${data.unit_note ? `<div class="backtest-period">${data.unit_note}</div>` : ''}
+        <div class="backtest-stats">
+          <div class="stat-box"><div class="stat-value">${s.total_trades}</div><div class="stat-label">総トレード数</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${winRateClass}"><span class="stat-emoji">${winRateEmoji}</span>${s.win_rate}%</div><div class="stat-label">勝率(${s.win_trades || 0}勝${s.lose_trades || 0}敗)</div></div>
+          <div class="stat-box"><div class="stat-value ${pnlClass}">${s.total_pnl > 0 ? '+' : ''}${s.total_pnl}</div><div class="stat-label">累計損益(pt)</div></div>
+          <div class="stat-box"><div class="stat-value pos">+${s.avg_win}</div><div class="stat-label">平均利益</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.avg_loss}</div><div class="stat-label">平均損失</div></div>
+          <div class="stat-box"><div class="stat-value neg">${s.max_drawdown}</div><div class="stat-label">最大ドローダウン</div></div>
+          <div class="stat-box"><div class="stat-value highlight ${expClass}"><span class="stat-emoji">${expEmoji}</span>${s.expectancy > 0 ? '+' : ''}${s.expectancy || 0}</div><div class="stat-label">期待値(1トレード平均pt)</div></div>
+          ${s.profit_factor !== null && s.profit_factor !== undefined ? `<div class="stat-box"><div class="stat-value highlight ${pfClass}"><span class="stat-emoji">${pfEmoji}</span>${s.profit_factor}</div><div class="stat-label">プロフィットファクター</div></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    if (data.equity_curve && data.equity_curve.length > 0) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chart-card';
+      wrapper.innerHTML = `
+        <h2>資産推移(1日1回版) / ドローダウン</h2>
+        <canvas id="equityChartDaily"></canvas>
+      `;
+      section.appendChild(wrapper);
+
+      const curve = data.equity_curve;
+      const labels = curve.map(c => c.trade_no);
+      const cumPnl = curve.map(c => c.cumulative_pnl);
+      const drawdown = curve.map(c => c.drawdown);
+      const gridColor = '#dde1e6';
+      const textColor = '#6b7280';
+
+      if (window._equityChartDaily) {
+        window._equityChartDaily.destroy();
+      }
+      window._equityChartDaily = new Chart(document.getElementById('equityChartDaily'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: '累積損益(pt)', data: cumPnl, borderColor: '#1d8a45', backgroundColor: 'rgba(29,138,69,0.08)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+            { label: 'ドローダウン(pt)', data: drawdown, borderColor: '#c0362c', backgroundColor: 'rgba(192,54,44,0.08)', fill: true, borderWidth: 1, pointRadius: 0, tension: 0.1 },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: textColor, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: gridColor }, title: { display: true, text: 'トレード回数(日数とほぼ一致)', color: textColor, font: { size: 10 } } },
+            y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+  } catch (err) {
+  }
+}
+
+async function loadForwardTest() {
+  const section = document.getElementById('forward-test-section');
+  try {
+    const res = await fetch('forward_test.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.note || !data.overall || Object.keys(data.overall).length === 0) {
+      section.innerHTML = `
+        <div class="forward-test-card">
+          <h2>フォワードテスト(実際のシグナルの検証)</h2>
+          <div class="ft-note">${data.note || 'データを集計中です。'} (現在の履歴件数: ${data.total_history_points || 0}件, シグナル件数: ${data.total_signals || 0}件)</div>
+        </div>
+      `;
+      return;
+    }
+
+    const horizonLabels = { '30min': '30分後', '60min': '1時間後', '120min': '2時間後' };
+    const horizonBoxes = Object.entries(data.overall).map(([key, sides]) => {
+      const rows = Object.entries(sides).map(([side, s]) => {
+        const cls = side === '買い' ? 'buy' : 'sell';
+        if (!s.sufficient_data) {
+          return `
+            <div class="ft-side-row">
+              <span class="ft-side-label ${cls}">${side}</span>
+              <span class="ft-insufficient">n=${s.n}(データ不足)</span>
+            </div>
+          `;
+        }
+        return `
+          <div class="ft-side-row">
+            <span class="ft-side-label ${cls}">${side}</span>
+            <span class="ft-winrate">${s.win_rate}% (n=${s.n})</span>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="ft-horizon-box">
+          <div class="ft-horizon-title">${horizonLabels[key] || key}</div>
+          ${rows}
+        </div>
+      `;
+    }).join('');
+
+    // 時間帯別・曜日別のバー表示
+    function renderBars(items) {
+      if (!items || items.length === 0) return '<div class="ft-insufficient">データがありません</div>';
+      return items.map(item => {
+        let barClass = 'na';
+        let widthPct = 0;
+        let valueText = 'n=' + item.n;
+        if (item.sufficient_data && item.win_rate !== null) {
+          widthPct = item.win_rate;
+          barClass = item.win_rate >= 55 ? 'high' : item.win_rate >= 45 ? 'mid' : 'low';
+          valueText = `${item.win_rate}%(n=${item.n})`;
+        }
+        return `
+          <div class="ft-bar-row">
+            <span class="ft-bar-label">${item.label}</span>
+            <span class="ft-bar-track"><span class="ft-bar-fill ${barClass}" style="width:${widthPct}%"></span></span>
+            <span class="ft-bar-value">${valueText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    section.innerHTML = `
+      <div class="forward-test-card">
+        <h2>フォワードテスト(実際のシグナルの検証)</h2>
+        <div class="ft-note">実際にリアルタイムで出力されたシグナルが、その後どうなったかを検証しています(n=${data.min_samples_for_stats || 5}未満は参考程度)。総シグナル件数: ${data.total_signals}件</div>
+        <div class="ft-horizon-grid" style="margin-top:12px;">${horizonBoxes}</div>
+        <div class="ft-breakdown-grid">
+          <div class="ft-breakdown-col">
+            <h3>時間帯別勝率(${horizonLabels['60min']}判定)</h3>
+            ${renderBars(data.by_hour)}
+          </div>
+          <div class="ft-breakdown-col">
+            <h3>曜日別勝率(${horizonLabels['60min']}判定)</h3>
+            ${renderBars(data.by_weekday)}
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+  }
+}
+
+const AUTO_REFRESH_SECONDS = 60;
+let secondsLeft = AUTO_REFRESH_SECONDS;
+
+function updateLiveAgo() {
+  const el = document.getElementById('updated-live');
+  if (!el || !window._lastUpdatedAt) return;
+  const elapsedSec = Math.floor((Date.now() - window._lastUpdatedAt) / 1000);
+  let text, dotClass;
+  if (elapsedSec < 60) {
+    text = `${elapsedSec}秒前`;
+  } else if (elapsedSec < 3600) {
+    text = `${Math.floor(elapsedSec / 60)}分前`;
+  } else {
+    text = `${Math.floor(elapsedSec / 3600)}時間前`;
+  }
+  if (elapsedSec < 600) {
+    dotClass = 'fresh';
+  } else if (elapsedSec < 3600) {
+    dotClass = 'stale';
+  } else {
+    dotClass = 'old';
+  }
+  el.innerHTML = `<span class="updated-dot ${dotClass}"></span>更新から${text}`;
+}
+
+setInterval(() => {
+  secondsLeft -= 1;
+  if (secondsLeft <= 0) {
+    loadDashboard();
+    secondsLeft = AUTO_REFRESH_SECONDS;
+  }
+  const countdownEl = document.getElementById('countdown');
+  if (countdownEl) {
+    countdownEl.textContent = `(${secondsLeft}秒後に自動更新)`;
+  }
+  updateLiveAgo();
+}, 1000);
+
+// ===== ポジション管理メモ & 含み損益トラッカー =====
+// このブラウザのlocalStorageにのみ保存されます(他の端末とは同期されません)
+
+const POSITION_KEY = 'nikkei_position_v1';
+const HISTORY_KEY = 'nikkei_trade_history_v1';
+
+function getPosition() {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function setPosition(pos) {
+  localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
+}
+function clearPosition() {
+  localStorage.removeItem(POSITION_KEY);
+}
+function getTradeHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function addTradeToHistory(trade) {
+  const history = getTradeHistory();
+  history.unshift(trade);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
+}
+function handleClearHistory() {
+  if (!confirm('保存されている取引記録を全て削除します。よろしいですか?(この操作は元に戻せません)')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderPositionUI();
+}
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderPositionUI() {
+  const section = document.getElementById('position-section');
+  if (!section) return;
+  const pos = getPosition();
+  const history = getTradeHistory();
+  const latest = window._latestData;
+  const currentPrice = latest ? latest.latest_close : null;
+  const currentSignal = latest ? latest.signal : null;
+
+  let historyHtml = '';
+  if (history.length > 0) {
+    const rows = history.slice(0, 8).map(t => {
+      const pnlClass = t.pnl > 0 ? 'pnl-pos' : t.pnl < 0 ? 'pnl-neg' : '';
+      return `
+        <tr>
+          <td>${t.exitTime || '-'}</td>
+          <td>${t.side === 'buy' ? '買い' : '売り'}</td>
+          <td>${t.entryPrice.toLocaleString()}</td>
+          <td>${t.exitPrice.toLocaleString()}</td>
+          <td class="${pnlClass}">${t.pnl > 0 ? '+' : ''}${t.pnl.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+    historyHtml = `
+      <div class="trade-history">
+        <h3>直近の記録(最大8件, このブラウザ内にのみ保存)</h3>
+        <table>
+          <thead><tr><th>決済時刻</th><th>方向</th><th>エントリー</th><th>決済</th><th>損益(pt)</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="position-form-row" style="margin-top:10px;">
+          <button class="position-btn secondary" onclick="handleClearHistory()">この記録を全て削除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (pos) {
+    const sideLabel = pos.side === 'buy' ? '買い' : '売り';
+    const sideClass = pos.side === 'buy' ? 'buy' : 'sell';
+    const sltpRow = (pos.slAtEntry || pos.tp1AtEntry || pos.tp2AtEntry) ? `
+      <div class="position-sltp-row">
+        ${pos.slAtEntry ? `<div class="sltp-item sl">SL(参考): <span class="sltp-value">${pos.slAtEntry.toLocaleString()}</span></div>` : ''}
+        ${pos.tp1AtEntry ? `<div class="sltp-item tp">利確①(参考): <span class="sltp-value">${pos.tp1AtEntry.toLocaleString()}</span></div>` : ''}
+        ${pos.tp2AtEntry ? `<div class="sltp-item tp">利確②(参考): <span class="sltp-value">${pos.tp2AtEntry.toLocaleString()}</span></div>` : ''}
+      </div>
+    ` : '';
+    section.innerHTML = `
+      <div class="position-card">
+        <h2>ポジション管理</h2>
+        ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
+        <div class="position-active">
+          <span class="position-side-badge ${sideClass}">${sideLabel}中</span>
+          <div class="position-pnl-block">
+            <div class="position-pnl" id="live-pnl">計算中...</div>
+            <div class="position-pnl-label">含み損益(pt)</div>
+          </div>
+          <div class="position-meta-small">
+            エントリー: ¥${pos.entryPrice.toLocaleString()}<br>
+            時刻: ${pos.entryTime}
+          </div>
+        </div>
+        ${sltpRow}
+        ${pos.memo ? `<div class="position-memo-display">${escapeHtml(pos.memo)}</div>` : ''}
+        <div class="position-form-row" style="margin-top:12px;">
+          <button class="position-btn danger" onclick="handleClosePosition()">ポジションを決済する</button>
+        </div>
+        ${historyHtml}
+      </div>
+    `;
+    updatePositionPnL(currentPrice);
+  } else {
+    const defaultSide = currentSignal === '売り' ? 'sell' : 'buy';
+    section.innerHTML = `
+      <div class="position-card">
+        <h2>ポジション管理</h2>
+        ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
+        <div class="no-position-note">現在記録中のポジションはありません。エントリーしたらこちらに記録しておくと、含み損益を自動計算できます(このブラウザ内にのみ保存されます)。</div>
+        <div class="position-form">
+          <div class="position-form-row">
+            <label>方向</label>
+            <select id="pos-side" onchange="updateSuggestedLevels(); syncPosPriceWithEntry();">
+              <option value="buy" ${defaultSide === 'buy' ? 'selected' : ''}>買い</option>
+              <option value="sell" ${defaultSide === 'sell' ? 'selected' : ''}>売り</option>
+            </select>
+            <label>価格</label>
+            <input type="number" id="pos-price" step="0.01" value="${currentPrice !== null ? currentPrice : ''}">
+          </div>
+          <div id="suggested-levels-box"></div>
+          <textarea id="pos-memo" placeholder="メモ(任意): エントリー根拠や作戦など"></textarea>
+          <div class="position-form-row">
+            <button class="position-btn" onclick="handleOpenPosition()">この内容でエントリー記録</button>
+          </div>
+        </div>
+        ${historyHtml}
+      </div>
+    `;
+    updateSuggestedLevels();
+  }
+}
+
+function updateSuggestedLevels() {
+  const box = document.getElementById('suggested-levels-box');
+  const sideSelect = document.getElementById('pos-side');
+  if (!box || !sideSelect) return;
+  const latest = window._latestData;
+  const side = sideSelect.value;
+  const levels = latest && latest.suggested_levels ? latest.suggested_levels[side] : null;
+
+  if (!levels) {
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="suggested-levels">
+      <div class="suggested-levels-title">推奨レベル(ATRベースの参考値)</div>
+      <div class="suggested-grid">
+        <div><div class="sg-label">Entry</div><div class="sg-value entry">${levels.entry.toLocaleString()}</div></div>
+        <div><div class="sg-label">SL</div><div class="sg-value sl">${levels.sl !== null ? levels.sl.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">利確①</div><div class="sg-value tp">${levels.tp1 !== null ? levels.tp1.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">利確②</div><div class="sg-value tp">${levels.tp2 !== null ? levels.tp2.toLocaleString() : '-'}</div></div>
+        <div><div class="sg-label">RR</div><div class="sg-value rr">1:${levels.rr1} / 1:${levels.rr2}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function syncPosPriceWithEntry() {
+  // 方向を切り替えても価格欄は現在値のままにする(参考レベルはupdateSuggestedLevelsで別途表示される)
+}
+
+function handleOpenPosition() {
+  const side = document.getElementById('pos-side').value;
+  const price = parseFloat(document.getElementById('pos-price').value);
+  const memo = document.getElementById('pos-memo').value;
+  if (isNaN(price)) { alert('価格を入力してください'); return; }
+  const now = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
+  const latest = window._latestData;
+  const levels = latest && latest.suggested_levels ? latest.suggested_levels[side] : null;
+  setPosition({
+    side,
+    entryPrice: price,
+    entryTime: now,
+    memo,
+    slAtEntry: levels ? levels.sl : null,
+    tp1AtEntry: levels ? levels.tp1 : null,
+    tp2AtEntry: levels ? levels.tp2 : null,
+    rr1AtEntry: levels ? levels.rr1 : null,
+    rr2AtEntry: levels ? levels.rr2 : null,
+  });
+  renderPositionUI();
+}
+
+function handleClosePosition() {
+  const pos = getPosition();
+  if (!pos) return;
+  const currentPrice = window._latestData ? window._latestData.latest_close : null;
+  const input = prompt('決済価格を入力してください', currentPrice !== null ? currentPrice : pos.entryPrice);
+  if (input === null) return;
+  const exitPrice = parseFloat(input);
+  if (isNaN(exitPrice)) { alert('数値を入力してください'); return; }
+  const pnl = pos.side === 'buy' ? (exitPrice - pos.entryPrice) : (pos.entryPrice - exitPrice);
+  const exitTime = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
+  addTradeToHistory({ ...pos, exitPrice, exitTime, pnl });
+  clearPosition();
+  renderPositionUI();
+}
+
+function updatePositionPnL(currentPrice) {
+  const pos = getPosition();
+  const el = document.getElementById('live-pnl');
+  if (!pos || !el || currentPrice === null || currentPrice === undefined) return;
+  const pnl = pos.side === 'buy' ? (currentPrice - pos.entryPrice) : (pos.entryPrice - currentPrice);
+  el.textContent = (pnl > 0 ? '+' : '') + pnl.toFixed(2);
+  el.className = 'position-pnl ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
+}
+
+</script>
+</body>
+</html>
