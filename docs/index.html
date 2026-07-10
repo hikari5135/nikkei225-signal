@@ -290,6 +290,10 @@
   .position-pnl.pos { color: var(--buy); }
   .position-pnl.neg { color: var(--sell); }
   .position-pnl-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .position-pnl-yen { font-size: 16px; font-weight: 700; font-family: var(--mono); margin-top: 8px; color: var(--text); }
+  .position-pnl-yen.pos { color: var(--buy); }
+  .position-pnl-yen.neg { color: var(--sell); }
+  .lot-suggest-hint { font-size: 11.5px; color: var(--muted); margin: -2px 0 4px; line-height: 1.5; }
   .position-meta-small { font-size: 12px; color: var(--muted); line-height: 1.6; }
   .position-memo-display {
     font-size: 13px;
@@ -1463,6 +1467,25 @@ setInterval(() => {
 const POSITION_KEY = 'nikkei_position_v1';
 const HISTORY_KEY = 'nikkei_trade_history_v1';
 const LOT_KEY = 'nikkei_lot_calc_v1';
+const LOT_PT_VALUE = 10; // 日経225マイクロ先物: 1pt = 10円
+
+function getLotSettings() {
+  const defaults = { capital: 150000, margin: 20000, ddPt: 4330, safety: 1.5, ddRatio: 50, marginRatio: 50 };
+  try {
+    const raw = localStorage.getItem(LOT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return defaults;
+}
+
+function calcRecommendedLots(capital, margin, ddPt, safety, ddRatio, marginRatio) {
+  const adjustedDDpt = ddPt * safety;
+  const adjustedDDyen = adjustedDDpt * LOT_PT_VALUE;
+  const ddLots = adjustedDDyen > 0 ? Math.floor((capital * (ddRatio / 100)) / adjustedDDyen) : 0;
+  const marginLots = margin > 0 ? Math.floor((capital * (marginRatio / 100)) / margin) : 0;
+  const recommended = Math.max(0, Math.min(ddLots, marginLots));
+  return { ddLots, marginLots, recommended, adjustedDDpt, adjustedDDyen };
+}
 
 function renderLotSizeUI() {
   const section = document.getElementById('lot-size-section');
@@ -1621,13 +1644,17 @@ function renderPositionUI() {
   if (history.length > 0) {
     const rows = history.slice(0, 8).map(t => {
       const pnlClass = t.pnl > 0 ? 'pnl-pos' : t.pnl < 0 ? 'pnl-neg' : '';
+      const lotsLabel = t.lots ? t.lots + '枚' : '-';
+      const pnlYen = t.pnlYen !== undefined && t.pnlYen !== null ? t.pnlYen : (t.lots ? t.pnl * LOT_PT_VALUE * t.lots : null);
       return `
         <tr>
           <td>${t.exitTime || '-'}</td>
           <td>${t.side === 'buy' ? '買い' : '売り'}</td>
+          <td>${lotsLabel}</td>
           <td>${t.entryPrice.toLocaleString()}</td>
           <td>${t.exitPrice.toLocaleString()}</td>
           <td class="${pnlClass}">${t.pnl > 0 ? '+' : ''}${t.pnl.toFixed(2)}</td>
+          <td class="${pnlClass}">${pnlYen !== null ? (pnlYen > 0 ? '+' : '') + Math.round(pnlYen).toLocaleString() + '円' : '-'}</td>
         </tr>
       `;
     }).join('');
@@ -1635,7 +1662,7 @@ function renderPositionUI() {
       <div class="trade-history">
         <h3>直近の記録(最大8件, このブラウザ内にのみ保存)</h3>
         <table>
-          <thead><tr><th>決済時刻</th><th>方向</th><th>エントリー</th><th>決済</th><th>損益(pt)</th></tr></thead>
+          <thead><tr><th>決済時刻</th><th>方向</th><th>枚数</th><th>エントリー</th><th>決済</th><th>損益(pt)</th><th>損益(円)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
         <div class="position-form-row" style="margin-top:10px;">
@@ -1648,6 +1675,7 @@ function renderPositionUI() {
   if (pos) {
     const sideLabel = pos.side === 'buy' ? '買い' : '売り';
     const sideClass = pos.side === 'buy' ? 'buy' : 'sell';
+    const lots = pos.lots || 1;
     const sltpRow = (pos.slAtEntry || pos.tp1AtEntry || pos.tp2AtEntry) ? `
       <div class="position-sltp-row">
         ${pos.slAtEntry ? `<div class="sltp-item sl">SL(参考): <span class="sltp-value">${pos.slAtEntry.toLocaleString()}</span></div>` : ''}
@@ -1660,10 +1688,12 @@ function renderPositionUI() {
         <h2>ポジション管理</h2>
         ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
         <div class="position-active">
-          <span class="position-side-badge ${sideClass}">${sideLabel}中</span>
+          <span class="position-side-badge ${sideClass}">${sideLabel}中(${lots}枚)</span>
           <div class="position-pnl-block">
             <div class="position-pnl" id="live-pnl">計算中...</div>
             <div class="position-pnl-label">含み損益(pt)</div>
+            <div class="position-pnl-yen" id="live-pnl-yen">-</div>
+            <div class="position-pnl-label">含み損益(円換算・${lots}枚)</div>
           </div>
           <div class="position-meta-small">
             エントリー: ¥${pos.entryPrice.toLocaleString()}<br>
@@ -1681,11 +1711,17 @@ function renderPositionUI() {
     updatePositionPnL(currentPrice);
   } else {
     const defaultSide = currentSignal === '売り' ? 'sell' : 'buy';
+    const lotSettings = getLotSettings();
+    const { recommended } = calcRecommendedLots(
+      lotSettings.capital, lotSettings.margin, lotSettings.ddPt,
+      lotSettings.safety, lotSettings.ddRatio, lotSettings.marginRatio
+    );
+    const defaultLots = recommended > 0 ? recommended : 1;
     section.innerHTML = `
       <div class="position-card">
         <h2>ポジション管理</h2>
         ${currentPrice !== null ? `<div class="position-current-price">現在値: ¥${currentPrice.toLocaleString()}</div>` : ''}
-        <div class="no-position-note">現在記録中のポジションはありません。エントリーしたらこちらに記録しておくと、含み損益を自動計算できます(このブラウザ内にのみ保存されます)。</div>
+        <div class="no-position-note">現在記録中のポジションはありません。エントリーしたらこちらに記録しておくと、含み損益(pt・円)を自動計算できます(このブラウザ内にのみ保存されます)。</div>
         <div class="position-form">
           <div class="position-form-row">
             <label>方向</label>
@@ -1695,7 +1731,10 @@ function renderPositionUI() {
             </select>
             <label>価格</label>
             <input type="number" id="pos-price" step="0.01" value="${currentPrice !== null ? currentPrice : ''}">
+            <label>枚数</label>
+            <input type="number" id="pos-lots" step="1" min="1" value="${defaultLots}">
           </div>
+          <div class="lot-suggest-hint">「推奨枚数計算」カードの値(${recommended}枚)を初期値にしています。必要に応じて変更してください。</div>
           <div id="suggested-levels-box"></div>
           <textarea id="pos-memo" placeholder="メモ(任意): エントリー根拠や作戦など"></textarea>
           <div class="position-form-row">
@@ -1743,8 +1782,10 @@ function syncPosPriceWithEntry() {
 function handleOpenPosition() {
   const side = document.getElementById('pos-side').value;
   const price = parseFloat(document.getElementById('pos-price').value);
+  const lotsInput = parseFloat(document.getElementById('pos-lots').value);
   const memo = document.getElementById('pos-memo').value;
   if (isNaN(price)) { alert('価格を入力してください'); return; }
+  const lots = (!isNaN(lotsInput) && lotsInput > 0) ? lotsInput : 1;
   const now = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
   const latest = window._latestData;
   const levels = latest && latest.suggested_levels ? latest.suggested_levels[side] : null;
@@ -1753,6 +1794,7 @@ function handleOpenPosition() {
     entryPrice: price,
     entryTime: now,
     memo,
+    lots,
     slAtEntry: levels ? levels.sl : null,
     tp1AtEntry: levels ? levels.tp1 : null,
     tp2AtEntry: levels ? levels.tp2 : null,
@@ -1770,9 +1812,11 @@ function handleClosePosition() {
   if (input === null) return;
   const exitPrice = parseFloat(input);
   if (isNaN(exitPrice)) { alert('数値を入力してください'); return; }
+  const lots = pos.lots || 1;
   const pnl = pos.side === 'buy' ? (exitPrice - pos.entryPrice) : (pos.entryPrice - exitPrice);
+  const pnlYen = pnl * LOT_PT_VALUE * lots;
   const exitTime = window._latestData ? window._latestData.latest_time : new Date().toLocaleString('ja-JP');
-  addTradeToHistory({ ...pos, exitPrice, exitTime, pnl });
+  addTradeToHistory({ ...pos, exitPrice, exitTime, pnl, pnlYen, lots });
   clearPosition();
   renderPositionUI();
 }
@@ -1780,10 +1824,17 @@ function handleClosePosition() {
 function updatePositionPnL(currentPrice) {
   const pos = getPosition();
   const el = document.getElementById('live-pnl');
+  const elYen = document.getElementById('live-pnl-yen');
   if (!pos || !el || currentPrice === null || currentPrice === undefined) return;
+  const lots = pos.lots || 1;
   const pnl = pos.side === 'buy' ? (currentPrice - pos.entryPrice) : (pos.entryPrice - currentPrice);
+  const pnlYen = pnl * LOT_PT_VALUE * lots;
   el.textContent = (pnl > 0 ? '+' : '') + pnl.toFixed(2);
   el.className = 'position-pnl ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
+  if (elYen) {
+    elYen.textContent = (pnlYen > 0 ? '+' : '') + Math.round(pnlYen).toLocaleString() + '円';
+    elYen.className = 'position-pnl-yen ' + (pnlYen > 0 ? 'pos' : pnlYen < 0 ? 'neg' : '');
+  }
 }
 </script>
 </body>
