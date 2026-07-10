@@ -19,6 +19,17 @@
     --accent: #3f6fd1;
     --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
+  body.dark-mode {
+    --bg: #14171c;
+    --panel: #1c2028;
+    --border: #2c313c;
+    --text: #e7e5e0;
+    --muted: #8b92a0;
+    --buy: #3ecf7a;
+    --sell: #f16a63;
+    --hold: #9aa2b1;
+    --accent: #6c9bf5;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -53,17 +64,18 @@
   }
   body.force-vertical .three-col-grid { grid-template-columns: 1fr; }
 
-  .layout-toggle-btn {
-    padding: 6px 14px;
-    border-radius: 6px;
+  .layout-toggle-btn, .theme-toggle-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
     border: 1px solid var(--border);
-    background: #fff;
+    background: var(--panel);
     color: var(--text);
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     font-family: inherit;
+    min-height: 42px;
   }
-  .layout-toggle-btn:hover { background: var(--bg); }
+  .layout-toggle-btn:hover, .theme-toggle-btn:hover { background: var(--bg); }
 
   header {
     display: flex;
@@ -239,27 +251,29 @@
   .position-form input[type="text"],
   .position-form textarea,
   .position-form select {
-    padding: 7px 10px;
+    padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
-    background: #fff;
+    background: var(--panel);
     color: var(--text);
+    min-height: 42px;
   }
   .position-form textarea { width: 100%; min-height: 50px; resize: vertical; }
   .position-btn {
-    padding: 8px 18px;
-    border-radius: 6px;
+    padding: 13px 22px;
+    min-height: 50px;
+    border-radius: 8px;
     border: 1px solid var(--accent);
     background: var(--accent);
     color: #fff;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
     font-weight: 600;
   }
-  .position-btn.secondary { background: #fff; color: var(--accent); }
-  .position-btn.danger { background: #fff; color: var(--sell); border-color: var(--sell); }
+  .position-btn.secondary { background: var(--panel); color: var(--accent); }
+  .position-btn.danger { background: var(--panel); color: var(--sell); border-color: var(--sell); }
   .position-btn:hover { opacity: 0.85; }
 
   .lot-card {
@@ -565,6 +579,49 @@
     .price { font-size: 22px; }
     .signal-badge { font-size: 22px; padding: 8px 18px; }
   }
+
+  .top-stats-banner {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .top-stats-main {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-stats-verdict-badge {
+    font-size: 22px;
+    font-weight: 800;
+    padding: 10px 20px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .top-stats-verdict-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
+  .top-stats-verdict-badge.sell { background: rgba(218,54,51,0.15); color: var(--sell); }
+  .top-stats-verdict-badge.hold { background: rgba(110,118,129,0.15); color: var(--hold); }
+  .top-stats-stars-block { flex: 1; min-width: 180px; }
+  .top-stats-stars { font-size: 22px; letter-spacing: 3px; }
+  .top-stats-confidence { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .top-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 14px;
+  }
+  .top-stats-item { text-align: center; }
+  .top-stats-item .ts-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .top-stats-item .ts-value { font-size: 22px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+  .top-stats-item .ts-value.pos { color: var(--buy); }
+  .top-stats-item .ts-value.neg { color: var(--sell); }
+  .top-stats-item .ts-value.neutral { color: var(--muted); }
+  .top-stats-item .ts-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -572,10 +629,13 @@
   <header>
     <h1>日経225 デイトレシグナル</h1>
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()">🌙 ダーク</button>
       <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="toggleLayout()">レイアウト: 横並び</button>
       <div class="updated" id="updated">読み込み中...</div>
     </div>
   </header>
+
+  <div id="top-stats-section"></div>
 
   <div id="event-section"></div>
 
@@ -977,6 +1037,7 @@ async function loadDashboard() {
       window._positionUIInitialized = true;
     }
     updatePositionPnL(data.latest_close);
+    renderTopStatsBanner();
 
     // 総合まとめカード(既存の判定理由・複合判定・星評価を再掲するのみ。架空の数値は追加しない)
     const finalSummarySection = document.getElementById('final-summary-section');
@@ -1003,6 +1064,30 @@ async function loadDashboard() {
 
 // ===== レイアウト切替(横並び/縦並び) =====
 const LAYOUT_KEY = 'nikkei_layout_mode';
+const THEME_KEY = 'nikkei_theme_mode';
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'light';
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem(THEME_KEY) || 'light';
+  const next = current === 'light' ? 'dark' : 'light';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+function applyTheme(mode) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (mode === 'dark') {
+    document.body.classList.add('dark-mode');
+    if (btn) btn.textContent = '☀️ ライト';
+  } else {
+    document.body.classList.remove('dark-mode');
+    if (btn) btn.textContent = '🌙 ダーク';
+  }
+}
 
 function initLayoutToggle() {
   const saved = localStorage.getItem(LAYOUT_KEY) || 'horizontal';
@@ -1030,6 +1115,7 @@ function applyLayout(mode) {
 loadDashboard();
 loadSignalHistory();
 initLayoutToggle();
+initTheme();
 
 async function loadSignalHistory() {
   const section = document.getElementById('signal-history-section');
@@ -1075,10 +1161,10 @@ async function loadSignalHistory() {
 async function loadBacktest() {
   const section = document.getElementById('backtest-section');
   try {
-    const res = await fetch('backtest.json?t=' + Date.now());
-    if (!res.ok) return;
     const data = await res.json();
     const s = data.summary;
+    window._backtestSummary = s;
+    renderTopStatsBanner();
 
     const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
     const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
@@ -1469,6 +1555,62 @@ const HISTORY_KEY = 'nikkei_trade_history_v1';
 const LOT_KEY = 'nikkei_lot_calc_v1';
 const LOT_PT_VALUE = 10; // 日経225マイクロ先物: 1pt = 10円
 
+function renderTopStatsBanner() {
+  const section = document.getElementById('top-stats-section');
+  if (!section) return;
+  const data = window._latestData;
+  if (!data) return;
+
+  const signalClass = data.signal === '買い' ? 'buy' : data.signal === '売り' ? 'sell' : 'hold';
+  const starsCount = data.stars || 0;
+  const isHold = data.signal === '様子見';
+  const starsHtml = isHold
+    ? `<span style="color:var(--muted); font-style:italic; font-size:14px;">評価対象外(様子見)</span>`
+    : Array.from({ length: 5 }, (_, i) => `<span style="color:${i < starsCount ? '#d99a00' : 'var(--border)'}">★</span>`).join('');
+
+  const pos = getPosition();
+  let pnlValueHtml, pnlSubHtml;
+  if (pos && data.latest_close !== undefined && data.latest_close !== null) {
+    const lots = pos.lots || 1;
+    const pnlPt = pos.side === 'buy' ? (data.latest_close - pos.entryPrice) : (pos.entryPrice - data.latest_close);
+    const pnlYen = pnlPt * LOT_PT_VALUE * lots;
+    const cls = pnlYen > 0 ? 'pos' : pnlYen < 0 ? 'neg' : 'neutral';
+    pnlValueHtml = `<div class="ts-value ${cls}">${pnlYen > 0 ? '+' : ''}${Math.round(pnlYen).toLocaleString()}円</div>`;
+    pnlSubHtml = `<div class="ts-sub">保有中(${lots}枚) ${pnlPt > 0 ? '+' : ''}${pnlPt.toFixed(2)}pt</div>`;
+  } else {
+    pnlValueHtml = `<div class="ts-value neutral">-</div>`;
+    pnlSubHtml = `<div class="ts-sub">ポジションなし</div>`;
+  }
+
+  const dailyClass = (data.daily_change || 0) > 0 ? 'pos' : (data.daily_change || 0) < 0 ? 'neg' : 'neutral';
+  const dailyHtml = (data.daily_change !== null && data.daily_change !== undefined)
+    ? `<div class="ts-value ${dailyClass}">${data.daily_change > 0 ? '+' : ''}${data.daily_change.toLocaleString()}</div><div class="ts-sub">${data.daily_change_pct > 0 ? '+' : ''}${data.daily_change_pct}%</div>`
+    : `<div class="ts-value neutral">-</div>`;
+
+  const bt = window._backtestSummary;
+  const winRateHtml = bt
+    ? `<div class="ts-value ${bt.win_rate >= 50 ? 'pos' : 'neutral'}">${bt.win_rate}%</div><div class="ts-sub">バックテスト実績</div>`
+    : `<div class="ts-value neutral">計測中</div>`;
+
+  section.innerHTML = `
+    <div class="top-stats-banner">
+      <div class="top-stats-main">
+        <span class="top-stats-verdict-badge ${signalClass}">${data.signal}</span>
+        <div class="top-stats-stars-block">
+          <div class="top-stats-stars">${starsHtml}</div>
+          <div class="top-stats-confidence">${data.composite ? '複合判定: ' + data.composite + ' / ' : ''}スコア ${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
+        </div>
+      </div>
+      <div class="top-stats-grid">
+        <div class="top-stats-item"><div class="ts-label">含み損益</div>${pnlValueHtml}${pnlSubHtml}</div>
+        <div class="top-stats-item"><div class="ts-label">現在値</div><div class="ts-value">¥${data.latest_close.toLocaleString()}</div></div>
+        <div class="top-stats-item"><div class="ts-label">前日比</div>${dailyHtml}</div>
+        <div class="top-stats-item"><div class="ts-label">勝率</div>${winRateHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
 function getLotSettings() {
   const defaults = { capital: 150000, margin: 20000, ddPt: 4330, safety: 1.5, ddRatio: 50, marginRatio: 50 };
   try {
@@ -1802,6 +1944,7 @@ function handleOpenPosition() {
     rr2AtEntry: levels ? levels.rr2 : null,
   });
   renderPositionUI();
+  renderTopStatsBanner();
 }
 
 function handleClosePosition() {
@@ -1819,6 +1962,7 @@ function handleClosePosition() {
   addTradeToHistory({ ...pos, exitPrice, exitTime, pnl, pnlYen, lots });
   clearPosition();
   renderPositionUI();
+  renderTopStatsBanner();
 }
 
 function updatePositionPnL(currentPrice) {
