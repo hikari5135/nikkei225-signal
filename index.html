@@ -39,6 +39,20 @@
   }
   body.force-vertical .two-col-grid { grid-template-columns: 1fr; }
 
+  .three-col-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .three-col-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    .three-col-grid { grid-template-columns: 1fr; }
+  }
+  body.force-vertical .three-col-grid { grid-template-columns: 1fr; }
+
   .layout-toggle-btn {
     padding: 6px 14px;
     border-radius: 6px;
@@ -247,6 +261,26 @@
   .position-btn.secondary { background: #fff; color: var(--accent); }
   .position-btn.danger { background: #fff; color: var(--sell); border-color: var(--sell); }
   .position-btn:hover { opacity: 0.85; }
+
+  .lot-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .lot-card h2 { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .lot-result {
+    text-align: center;
+    padding: 14px 0 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .lot-result-value { font-size: 36px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .lot-result-value span { font-size: 15px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .lot-result-note { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+  .lot-footnote { font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.6; }
   .position-active { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-bottom: 12px; }
   .position-side-badge { font-weight: 700; padding: 5px 14px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
   .position-side-badge.buy { background: rgba(46,160,67,0.15); color: var(--buy); }
@@ -547,19 +581,19 @@
     <div class="loading">データを読み込んでいます...</div>
   </div>
 
+  <div id="lot-size-section"></div>
+
   <div class="two-col-grid">
     <div id="signal-history-section"></div>
     <div id="position-section"></div>
   </div>
 
-  <div class="two-col-grid">
+  <div class="three-col-grid">
     <div id="backtest-section"></div>
     <div id="forward-test-section"></div>
+    <div id="daily-single-backtest-section"></div>
+    <div id="backtest-1h-section"></div>
   </div>
-
-  <div id="daily-single-backtest-section"></div>
-
-  <div id="backtest-1h-section"></div>
 
   <div id="final-summary-section"></div>
 
@@ -573,6 +607,15 @@
 async function loadDashboard() {
   const content = document.getElementById('content');
   const updatedEl = document.getElementById('updated');
+
+  renderLotSizeUI();
+
+  // グラフの描画をくっきりさせる(高解像度ディスプレイ対策)
+  if (window.Chart && !window._chartDefaultsApplied) {
+    Chart.defaults.devicePixelRatio = (window.devicePixelRatio || 1) * 2;
+    Chart.defaults.font.size = 12;
+    window._chartDefaultsApplied = true;
+  }
 
   try {
     const res = await fetch('data.json?t=' + Date.now());
@@ -873,6 +916,11 @@ async function loadDashboard() {
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { labels: { color: textColor, font: { size: 11 } } },
+          tooltip: {
+            titleFont: { size: 13 },
+            bodyFont: { size: 13 },
+            padding: 10,
+          },
           annotation: { annotations }
         },
         scales: commonScales
@@ -887,7 +935,10 @@ async function loadDashboard() {
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { titleFont: { size: 13 }, bodyFont: { size: 13 }, padding: 10 },
+        },
         scales: {
           x: commonScales.x,
           y: { min: 0, max: 100, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
@@ -907,7 +958,10 @@ async function loadDashboard() {
       },
       options: {
         responsive: true,
-        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+        plugins: {
+          legend: { labels: { color: textColor, font: { size: 11 } } },
+          tooltip: { titleFont: { size: 13 }, bodyFont: { size: 13 }, padding: 10 },
+        },
         scales: commonScales
       }
     }));
@@ -1051,6 +1105,10 @@ async function loadBacktest() {
 
     if (data.equity_curve && data.equity_curve.length > 0) {
       renderEquityCurve(data.equity_curve);
+    }
+
+    if (s.max_drawdown !== undefined && s.max_drawdown !== null) {
+      updateLotDDFromBacktest(Math.abs(s.max_drawdown));
     }
   } catch (err) {
   }
@@ -1404,6 +1462,117 @@ setInterval(() => {
 
 const POSITION_KEY = 'nikkei_position_v1';
 const HISTORY_KEY = 'nikkei_trade_history_v1';
+const LOT_KEY = 'nikkei_lot_calc_v1';
+
+function renderLotSizeUI() {
+  const section = document.getElementById('lot-size-section');
+  if (!section) return;
+  const defaults = { capital: 150000, margin: 20000, ddPt: 4330, safety: 1.5, ddRatio: 50, marginRatio: 50 };
+  let s = defaults;
+  try {
+    const raw = localStorage.getItem(LOT_KEY);
+    if (raw) s = JSON.parse(raw);
+  } catch (e) {}
+
+  section.innerHTML = `
+    <div class="lot-card">
+      <h2>推奨枚数計算(マイクロ日経225)</h2>
+      <div class="position-form">
+        <div class="position-form-row">
+          <label>運用資金</label>
+          <input type="number" id="lot-capital" value="${s.capital}" step="10000">
+          <label>円</label>
+          <label>証拠金/枚</label>
+          <input type="number" id="lot-margin" value="${s.margin}" step="500">
+          <label>円</label>
+        </div>
+        <div class="position-form-row">
+          <label>想定最大DD</label>
+          <input type="number" id="lot-dd" value="${s.ddPt}" step="10">
+          <label>pt</label>
+          <label>安全係数</label>
+          <input type="number" id="lot-safety" value="${s.safety}" step="0.1">
+          <label>倍</label>
+        </div>
+        <div class="position-form-row">
+          <label>DD許容比率</label>
+          <input type="number" id="lot-dd-ratio" value="${s.ddRatio}" step="5">
+          <label>%</label>
+          <label>証拠金使用上限比率</label>
+          <input type="number" id="lot-margin-ratio" value="${s.marginRatio}" step="5">
+          <label>%</label>
+        </div>
+      </div>
+      <div class="lot-result">
+        <div class="lot-result-value" id="lot-result-value">- <span>枚</span></div>
+        <div class="lot-result-note" id="lot-result-note"></div>
+      </div>
+      <div class="lot-footnote" id="lot-footnote-dd-source">証拠金額は取引所の見直しで日次変動するため、発注前に証券会社の最新値で確認してください。本ツールは投資助言ではありません。</div>
+    </div>
+  `;
+
+  ['lot-capital', 'lot-margin', 'lot-dd', 'lot-safety', 'lot-dd-ratio', 'lot-margin-ratio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateLotCalc);
+  });
+  updateLotCalc();
+}
+
+function updateLotCalc() {
+  const capital = parseFloat(document.getElementById('lot-capital').value) || 0;
+  const margin = parseFloat(document.getElementById('lot-margin').value) || 1;
+  const ddPt = parseFloat(document.getElementById('lot-dd').value) || 0;
+  const safety = parseFloat(document.getElementById('lot-safety').value) || 1;
+  const ddRatio = (parseFloat(document.getElementById('lot-dd-ratio').value) || 0) / 100;
+  const marginRatio = (parseFloat(document.getElementById('lot-margin-ratio').value) || 0) / 100;
+  const ptValue = 10; // 日経225マイクロ先物: 1pt = 10円
+
+  try {
+    localStorage.setItem(LOT_KEY, JSON.stringify({
+      capital, margin, ddPt, safety,
+      ddRatio: ddRatio * 100, marginRatio: marginRatio * 100
+    }));
+  } catch (e) {}
+
+  const adjustedDDpt = ddPt * safety;
+  const adjustedDDyen = adjustedDDpt * ptValue;
+
+  const ddLots = adjustedDDyen > 0 ? Math.floor((capital * ddRatio) / adjustedDDyen) : 0;
+  const marginLots = margin > 0 ? Math.floor((capital * marginRatio) / margin) : 0;
+  const recommended = Math.max(0, Math.min(ddLots, marginLots));
+
+  const valueEl = document.getElementById('lot-result-value');
+  const noteEl = document.getElementById('lot-result-note');
+  if (!valueEl || !noteEl) return;
+
+  valueEl.innerHTML = recommended + ' <span>枚</span>';
+
+  if (recommended === 0) {
+    noteEl.textContent = '資金に対して想定DDまたは証拠金の余裕が不足しています。条件を見直してください。';
+  } else if (ddLots <= marginLots) {
+    noteEl.innerHTML = `<b>DD制約</b>が上限を決めています(想定DD ${adjustedDDpt.toFixed(0)}pt ≈ ${Math.round(adjustedDDyen * recommended).toLocaleString()}円/${recommended}枚)。証拠金制約なら${marginLots}枚まで可能です。`;
+  } else {
+    noteEl.innerHTML = `<b>証拠金制約</b>が上限を決めています(証拠金使用額 ≈ ${Math.round(margin * recommended).toLocaleString()}円)。DD制約なら${ddLots}枚まで可能です。`;
+  }
+}
+
+function updateLotDDFromBacktest(maxDrawdownAbs) {
+  const input = document.getElementById('lot-dd');
+  const note = document.getElementById('lot-footnote-dd-source');
+  if (!input) return;
+
+  let hasSaved = false;
+  try { hasSaved = !!localStorage.getItem(LOT_KEY); } catch (e) {}
+
+  if (!hasSaved) {
+    // 保存済み設定がない(初回利用)場合のみ、実測バックテスト値を自動反映
+    input.value = maxDrawdownAbs;
+    updateLotCalc();
+  }
+  if (note) {
+    note.innerHTML = `※実測最大DD(直近バックテスト): ${maxDrawdownAbs}pt。証拠金額は取引所の見直しで日次変動するため、発注前に証券会社の最新値で確認してください。本ツールは投資助言ではありません。`;
+  }
+}
 
 function getPosition() {
   try {
@@ -1616,7 +1785,6 @@ function updatePositionPnL(currentPrice) {
   el.textContent = (pnl > 0 ? '+' : '') + pnl.toFixed(2);
   el.className = 'position-pnl ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
 }
-
 </script>
 </body>
 </html>
