@@ -1161,6 +1161,8 @@ async function loadSignalHistory() {
 async function loadBacktest() {
   const section = document.getElementById('backtest-section');
   try {
+    const res = await fetch('backtest.json?t=' + Date.now());
+    if (!res.ok) return;
     const data = await res.json();
     const s = data.summary;
     window._backtestSummary = s;
