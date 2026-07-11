@@ -122,6 +122,13 @@
   .signal-badge.hold { background: rgba(110,118,129,0.15); color: var(--hold); border: 1px solid var(--hold); }
 
   .signal-meta { flex: 1; min-width: 200px; }
+  .signal-sparkline-box {
+    margin-left: auto;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .signal-sparkline-box .ssb-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .signal-sparkline-box svg { display: block; }
   .price { font-size: 20px; font-weight: 600; font-family: var(--mono); }
   .price-time { color: var(--muted); font-size: 12px; margin-top: 1px; }
   .score { color: var(--muted); font-size: 12px; margin-top: 1px; font-family: var(--mono); }
@@ -675,6 +682,28 @@ async function loadDashboard() {
 
   renderLotSizeUI();
 
+  function buildSparklineSvg(closes, colorVar) {
+    if (!closes || closes.length < 2) return '';
+    const w = 120, h = 46, pad = 3;
+    const validCloses = closes.filter(c => c !== null && c !== undefined && !isNaN(c));
+    if (validCloses.length < 2) return '';
+    const min = Math.min(...validCloses);
+    const max = Math.max(...validCloses);
+    const range = (max - min) || 1;
+    const points = closes.map((c, i) => {
+      const x = pad + (i / (closes.length - 1)) * (w - pad * 2);
+      const y = pad + (1 - ((c - min) / range)) * (h - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const lastClose = closes[closes.length - 1];
+    const lastX = w - pad;
+    const lastY = pad + (1 - ((lastClose - min) / range)) * (h - pad * 2);
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="${points}" fill="none" style="stroke:${colorVar}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.5" style="fill:${colorVar}" />
+    </svg>`;
+  }
+
   // グラフの描画をくっきりさせる(高解像度ディスプレイ対策)
   if (window.Chart && !window._chartDefaultsApplied) {
     Chart.defaults.devicePixelRatio = (window.devicePixelRatio || 1) * 2;
@@ -850,6 +879,8 @@ async function loadDashboard() {
       ? `<div class="two-col-grid">${riskHtml}${reasonsHtml}</div>`
       : reasonsHtml;
 
+    const sparkColorVar = signalClass === 'buy' ? 'var(--buy)' : signalClass === 'sell' ? 'var(--sell)' : 'var(--hold)';
+
     content.innerHTML = `
       <div class="signal-card ${signalClass}-card ${compositeBgClass}">
         <div class="signal-badge ${signalClass}">${data.signal}</div>
@@ -865,6 +896,10 @@ async function loadDashboard() {
           <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
           ${starsHtml}
           ${data.composite ? `<div><span class="composite-chip ${compositeBgClass === 'composite-buy-bg' ? 'buy' : compositeBgClass === 'composite-sell-bg' ? 'sell' : 'hold'}">総合判定: ${data.composite}</span></div>` : ''}
+        </div>
+        <div class="signal-sparkline-box">
+          <div class="ssb-label">直近推移</div>
+          ${buildSparklineSvg(data.candles.map(c => c.close), sparkColorVar)}
         </div>
       </div>
 
