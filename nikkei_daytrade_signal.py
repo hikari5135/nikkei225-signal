@@ -355,7 +355,13 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
         f"{stop_text}\n"
         f"\nReasons:\n{reasons_text}\n"
     )
-    resp = requests.post(webhook_url, json={"text": text}, timeout=10)
+    # DiscordのWebhookは "content" キー、Slackは "text" キーを使う。
+    # URLに discord.com が含まれる場合は自動でDiscord向けの形式に切り替える。
+    if "discord" in webhook_url:
+        payload = {"content": text}
+    else:
+        payload = {"text": text}
+    resp = requests.post(webhook_url, json=payload, timeout=10)
     resp.raise_for_status()
 
 
