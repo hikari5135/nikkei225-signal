@@ -120,7 +120,7 @@
   .sc-badge-section { align-items: center; justify-content: center; }
   .sc-price-section { min-width: 160px; }
   .sc-score-section { min-width: 150px; }
-  .sc-spark-section { align-items: center; margin-left: auto; }
+  .sc-spark-section { align-items: center; }
   @media (max-width: 640px) {
     .signal-card { flex-direction: column; }
     .sc-section + .sc-section { border-left: none; border-top: 1px solid var(--border); }
@@ -139,13 +139,9 @@
   .signal-badge.hold { background: rgba(110,118,129,0.15); color: var(--hold); border: 1px solid var(--hold); }
 
   .signal-meta { flex: 1; min-width: 200px; }
-  .signal-sparkline-box {
-    margin-left: auto;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .signal-sparkline-box .ssb-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .signal-sparkline-box svg { display: block; }
+  .sc-spark-section .ssb-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; text-align: center; }
+  .sc-spark-section svg { display: block; }
+  .ssb-range { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px; }
   .price { font-size: 20px; font-weight: 600; font-family: var(--mono); }
   .price-time { color: var(--muted); font-size: 12px; margin-top: 1px; }
   .score { color: var(--muted); font-size: 12px; margin-top: 1px; font-family: var(--mono); }
@@ -701,7 +697,7 @@ async function loadDashboard() {
 
   function buildSparklineSvg(closes, colorVar) {
     if (!closes || closes.length < 2) return '';
-    const w = 120, h = 46, pad = 3;
+    const w = 180, h = 64, pad = 4;
     const validCloses = closes.filter(c => c !== null && c !== undefined && !isNaN(c));
     if (validCloses.length < 2) return '';
     const min = Math.min(...validCloses);
@@ -716,8 +712,8 @@ async function loadDashboard() {
     const lastX = w - pad;
     const lastY = pad + (1 - ((lastClose - min) / range)) * (h - pad * 2);
     return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="${points}" fill="none" style="stroke:${colorVar}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" />
-      <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.5" style="fill:${colorVar}" />
+      <polyline points="${points}" fill="none" style="stroke:${colorVar}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" style="fill:${colorVar}" />
     </svg>`;
   }
 
@@ -919,8 +915,9 @@ async function loadDashboard() {
           ${data.composite ? `<div><span class="composite-chip ${compositeBgClass === 'composite-buy-bg' ? 'buy' : compositeBgClass === 'composite-sell-bg' ? 'sell' : 'hold'}">総合判定: ${data.composite}</span></div>` : ''}
         </div>
         <div class="sc-section sc-spark-section">
-          <div class="ssb-label">直近推移</div>
+          <div class="ssb-label">直近の値動き(${data.candles.length}本)</div>
           ${buildSparklineSvg(data.candles.map(c => c.close), sparkColorVar)}
+          <div class="ssb-range">${data.candles[0].close.toLocaleString()} → ${data.candles[data.candles.length - 1].close.toLocaleString()}</div>
         </div>
       </div>
 
