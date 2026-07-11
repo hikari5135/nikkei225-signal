@@ -1,33 +1,25 @@
 {
-  "updated_at": "2026-07-10T04:43:23.899656+00:00",
+  "updated_at": "2026-07-11T03:59:39.130168+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-04-29 15:05",
-  "period_end": "2026-07-10 13:30",
-  "total_days": 60,
+  "period_end": "2026-07-11 05:55",
+  "total_days": 61,
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)。1日1回・その日最初のシグナルのみ採用し、当日中に強制決済するルールです。",
   "summary": {
-    "total_trades": 59,
-    "win_trades": 27,
+    "total_trades": 60,
+    "win_trades": 28,
     "lose_trades": 32,
-    "win_rate": 45.8,
-    "total_pnl": -8860.0,
-    "avg_win": 759.07,
-    "avg_loss": -917.34,
+    "win_rate": 46.7,
+    "total_pnl": -8810.0,
+    "avg_win": 735.71,
+    "avg_loss": -919.06,
     "max_win": 2555.0,
     "max_loss": -3940.0,
     "max_drawdown": -13240.0,
-    "expectancy": -150.17,
+    "expectancy": -146.83,
     "profit_factor": 0.7
   },
   "trades": [
-    {
-      "side": "short",
-      "entry_price": 63185.0,
-      "entry_time": "2026-05-09 00:10",
-      "exit_price": 63665.0,
-      "exit_time": "2026-05-09 05:55",
-      "pnl": -480.0
-    },
     {
       "side": "long",
       "entry_price": 63760.0,
@@ -416,9 +408,17 @@
       "side": "short",
       "entry_price": 68960.0,
       "entry_time": "2026-07-10 03:35",
-      "exit_price": 69045.0,
-      "exit_time": "2026-07-10 13:30",
-      "pnl": -85.0
+      "exit_price": 68855.0,
+      "exit_time": "2026-07-10 23:55",
+      "pnl": 105.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69205.0,
+      "entry_time": "2026-07-11 02:05",
+      "exit_price": 69345.0,
+      "exit_time": "2026-07-11 05:55",
+      "pnl": -140.0
     }
   ],
   "equity_curve": [
@@ -772,9 +772,15 @@
     },
     {
       "trade_no": 59,
-      "exit_time": "2026-07-10 13:30",
-      "cumulative_pnl": -8860.0,
-      "drawdown": -9290.0
+      "exit_time": "2026-07-10 23:55",
+      "cumulative_pnl": -8670.0,
+      "drawdown": -9100.0
+    },
+    {
+      "trade_no": 60,
+      "exit_time": "2026-07-11 05:55",
+      "cumulative_pnl": -8810.0,
+      "drawdown": -9240.0
     }
   ]
 }
