@@ -101,13 +101,30 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px 16px;
+    padding: 0;
     margin-bottom: 16px;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: stretch;
     flex-wrap: wrap;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .sc-section {
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .sc-section + .sc-section { border-left: 1px solid rgba(0,0,0,0.12); }
+  body.dark-mode .sc-section + .sc-section { border-left-color: rgba(255,255,255,0.12); }
+  .sc-badge-section { align-items: center; justify-content: center; }
+  .sc-price-section { min-width: 160px; }
+  .sc-score-section { min-width: 150px; }
+  .sc-spark-section { align-items: center; margin-left: auto; }
+  @media (max-width: 640px) {
+    .signal-card { flex-direction: column; }
+    .sc-section + .sc-section { border-left: none; border-top: 1px solid var(--border); }
+    .sc-spark-section { margin-left: 0; align-items: flex-start; }
   }
   .signal-badge {
     font-size: 20px;
@@ -883,8 +900,10 @@ async function loadDashboard() {
 
     content.innerHTML = `
       <div class="signal-card ${signalClass}-card ${compositeBgClass}">
-        <div class="signal-badge ${signalClass}">${data.signal}</div>
-        <div class="signal-meta">
+        <div class="sc-section sc-badge-section">
+          <div class="signal-badge ${signalClass}">${data.signal}</div>
+        </div>
+        <div class="sc-section sc-price-section">
           <div class="price">¥${data.latest_close.toLocaleString()}</div>
           ${data.daily_change !== null && data.daily_change !== undefined ? `
             <div class="daily-change ${data.daily_change > 0 ? 'pos' : data.daily_change < 0 ? 'neg' : 'zero'}">
@@ -892,12 +911,14 @@ async function loadDashboard() {
             </div>
           ` : ''}
           <div class="price-time">${data.latest_time} 時点</div>
+        </div>
+        <div class="sc-section sc-score-section">
           <div class="score">スコア: ${data.score > 0 ? '+' : ''}${data.score}</div>
           <div class="score-points ${data.score_normalized > 0 ? 'pos' : data.score_normalized < 0 ? 'neg' : 'zero'}">${data.score_normalized > 0 ? '+' : ''}${data.score_normalized}点</div>
           ${starsHtml}
           ${data.composite ? `<div><span class="composite-chip ${compositeBgClass === 'composite-buy-bg' ? 'buy' : compositeBgClass === 'composite-sell-bg' ? 'sell' : 'hold'}">総合判定: ${data.composite}</span></div>` : ''}
         </div>
-        <div class="signal-sparkline-box">
+        <div class="sc-section sc-spark-section">
           <div class="ssb-label">直近推移</div>
           ${buildSparklineSvg(data.candles.map(c => c.close), sparkColorVar)}
         </div>
