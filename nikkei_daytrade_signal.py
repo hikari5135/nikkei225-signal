@@ -246,6 +246,55 @@ def build_natural_summary(row, signal, composite, timeframes):
     )
 
 
+def build_ai_diagnosis_comment(row, signal, score_normalized, composite):
+    """顧客向け説明にも使える、より丁寧な読み物形式のAI診断コメントを生成する(ルールベースの自動生成コメント)"""
+    ma_trend = "上昇基調" if row["MA5"] > row["MA25"] else "下降基調"
+
+    rsi = row["RSI"]
+    if rsi >= 70:
+        momentum = "過熱感が意識される水準"
+    elif rsi <= 30:
+        momentum = "売られすぎが意識される水準"
+    else:
+        momentum = "過熱・売られすぎのいずれでもない中立的な水準"
+
+    macd_dir = "上向き" if row["MACD_hist"] > 0 else "下向き"
+
+    abs_score = abs(score_normalized) if score_normalized is not None else 0
+    if abs_score >= 60:
+        strength = "比較的明確な"
+    elif abs_score >= 30:
+        strength = "一定の"
+    else:
+        strength = "弱い"
+
+    if signal == "様子見":
+        verdict_line = (
+            f"現在は複数の指標が方向感に乏しく、{strength}シグナルしか出ていないため「様子見」と判断しています。"
+            f"無理にポジションを取らず、次に明確なシグナルが出るのを待つのが合理的な局面です。"
+        )
+    else:
+        verdict_line = (
+            f"移動平均線は{ma_trend}にあり、MACDも{macd_dir}に推移していることから、"
+            f"{strength}「{signal}」シグナルが点灯しています。RSIは{momentum}にあります。"
+        )
+
+    composite_line = ""
+    if composite:
+        if signal != "様子見" and signal in composite:
+            composite_line = (
+                f"複数の時間軸で見ても判定の方向はおおむね一致しており(複合判定: {composite})、"
+                f"短期的なノイズではなく一定の方向感がある可能性があります。"
+            )
+        else:
+            composite_line = (
+                f"ただし複数時間軸で見ると判定は「{composite}」となっており、"
+                f"時間軸によって見方が分かれている点には注意が必要です。"
+            )
+
+    return f"{verdict_line} {composite_line}".strip()
+
+
 MAX_POSSIBLE_SCORE = 7.0  # MA(3)+RSI(1.5)+MACD(1.5)+BB(1) の理論上の最大値
 
 
@@ -365,7 +414,7 @@ def send_slack_notification(webhook_url, signal, score, reasons, latest, timesta
     resp.raise_for_status()
 
 
-def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None, atr=None, suggested_levels=None, daily_change=None, daily_change_pct=None):
+def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes=None, composite=None, economic_events=None, breakdown=None, take_profit=None, stars=None, star_label=None, current_state=None, summary=None, atr=None, suggested_levels=None, daily_change=None, daily_change_pct=None, ai_diagnosis=None):
     recent = df.tail(100).copy()
     candles = []
     for ts, row in recent.iterrows():
@@ -403,6 +452,7 @@ def build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timefr
         "star_label": star_label,
         "current_state": current_state or [],
         "summary": summary,
+        "ai_diagnosis": ai_diagnosis,
         "atr": None if atr is None or pd.isna(atr) else round(float(atr), 2),
         "suggested_levels": suggested_levels or {},
         "daily_change": daily_change,
@@ -623,11 +673,14 @@ def main():
     summary = build_natural_summary(latest, signal, composite, timeframes)
     print(f"  summary: {summary}")
 
+    ai_diagnosis = build_ai_diagnosis_comment(latest, signal, normalize_score(score), composite)
+    print(f"  ai_diagnosis: {ai_diagnosis}")
+
     suggested_levels = build_suggested_levels(latest["Close"], latest.get("ATR"))
     daily_change, daily_change_pct = calc_daily_change(df)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary, latest.get("ATR"), suggested_levels, daily_change, daily_change_pct)
+    data = build_json(df, signal, score, reasons, timestamp, ticker, stop_price, timeframes, composite, economic_events, breakdown, take_profit, stars, star_label, current_state, summary, latest.get("ATR"), suggested_levels, daily_change, daily_change_pct, ai_diagnosis)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"data written: {OUTPUT_PATH}")
