@@ -91,6 +91,31 @@
     margin: 0;
     letter-spacing: 0.02em;
   }
+  .brand-block { display: flex; flex-direction: column; }
+  .brand-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #C8A96E;
+    margin-bottom: 3px;
+  }
+  .brand-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.01em;
+    color: #C8A96E;
+    line-height: 1.25;
+  }
+  .brand-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  @media (max-width: 640px) {
+    .brand-title { font-size: 18px; }
+  }
   .updated {
     color: var(--muted);
     font-size: 12px;
@@ -643,13 +668,61 @@
   .top-stats-item .ts-value.neg { color: var(--sell); }
   .top-stats-item .ts-value.neutral { color: var(--muted); }
   .top-stats-item .ts-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .ai-diagnosis-card {
+    background: linear-gradient(135deg, rgba(200,169,110,0.10), var(--panel) 55%);
+    border: 1px solid var(--border);
+    border-left: 4px solid #C8A96E;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .ai-diagnosis-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .ai-diagnosis-badge {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: #C8A96E;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .ai-diagnosis-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .ai-diagnosis-text { font-size: 14.5px; line-height: 1.8; color: var(--text); }
+  .ai-diagnosis-footnote { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  /* 顧客説明モード: 技術的な詳細を非表示にし、AI診断・シグナル・チャート・判定根拠のみ表示 */
+  body.client-mode .timeframe-card,
+  body.client-mode .breakdown-card,
+  body.client-mode .chart-grid,
+  body.client-mode #lot-size-section,
+  body.client-mode #position-section,
+  body.client-mode #signal-history-section,
+  body.client-mode #backtest-section,
+  body.client-mode #forward-test-section,
+  body.client-mode #daily-single-backtest-section,
+  body.client-mode #backtest-1h-section,
+  body.client-mode .sc-score-section .score {
+    display: none !important;
+  }
+  body.client-mode .signal-card { border-left: 4px solid #C8A96E; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>日経225 デイトレシグナル</h1>
+    <div class="brand-block">
+      <div class="brand-eyebrow">Navigator Suite</div>
+      <h1 class="brand-title">FPナビ Professional Investment Intelligence System</h1>
+      <div class="brand-subtitle">日経225 デイトレシグナル</div>
+    </div>
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="theme-toggle-btn" id="client-mode-toggle-btn" onclick="toggleClientMode()">👤 顧客説明モード</button>
       <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()">🌙 ダーク</button>
       <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="toggleLayout()">レイアウト: 横並び</button>
       <div class="updated" id="updated">読み込み中...</div>
@@ -657,6 +730,8 @@
   </header>
 
   <div id="top-stats-section"></div>
+
+  <div id="ai-diagnosis-section"></div>
 
   <div id="event-section"></div>
 
@@ -1095,6 +1170,7 @@ async function loadDashboard() {
     }
     updatePositionPnL(data.latest_close);
     renderTopStatsBanner();
+    renderAiDiagnosis();
 
     // 総合まとめカード(既存の判定理由・複合判定・星評価を再掲するのみ。架空の数値は追加しない)
     const finalSummarySection = document.getElementById('final-summary-section');
@@ -1122,6 +1198,30 @@ async function loadDashboard() {
 // ===== レイアウト切替(横並び/縦並び) =====
 const LAYOUT_KEY = 'nikkei_layout_mode';
 const THEME_KEY = 'nikkei_theme_mode';
+const CLIENT_MODE_KEY = 'nikkei_client_mode';
+
+function initClientMode() {
+  const saved = localStorage.getItem(CLIENT_MODE_KEY) || 'off';
+  applyClientMode(saved);
+}
+
+function toggleClientMode() {
+  const current = localStorage.getItem(CLIENT_MODE_KEY) || 'off';
+  const next = current === 'off' ? 'on' : 'off';
+  localStorage.setItem(CLIENT_MODE_KEY, next);
+  applyClientMode(next);
+}
+
+function applyClientMode(mode) {
+  const btn = document.getElementById('client-mode-toggle-btn');
+  if (mode === 'on') {
+    document.body.classList.add('client-mode');
+    if (btn) btn.textContent = '👤 顧客説明モード: ON';
+  } else {
+    document.body.classList.remove('client-mode');
+    if (btn) btn.textContent = '👤 顧客説明モード';
+  }
+}
 
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'light';
@@ -1173,6 +1273,7 @@ loadDashboard();
 loadSignalHistory();
 initLayoutToggle();
 initTheme();
+initClientMode();
 
 async function loadSignalHistory() {
   const section = document.getElementById('signal-history-section');
@@ -1224,6 +1325,7 @@ async function loadBacktest() {
     const s = data.summary;
     window._backtestSummary = s;
     renderTopStatsBanner();
+    renderAiDiagnosis();
 
     const pnlClass = s.total_pnl > 0 ? 'pos' : s.total_pnl < 0 ? 'neg' : '';
     const expClass = (s.expectancy || 0) > 0 ? 'pos' : (s.expectancy || 0) < 0 ? 'neg' : '';
@@ -1616,6 +1718,29 @@ const POSITION_KEY = 'nikkei_position_v1';
 const HISTORY_KEY = 'nikkei_trade_history_v1';
 const LOT_KEY = 'nikkei_lot_calc_v1';
 const LOT_PT_VALUE = 10; // 日経225マイクロ先物: 1pt = 10円
+
+function renderAiDiagnosis() {
+  const section = document.getElementById('ai-diagnosis-section');
+  if (!section) return;
+  const data = window._latestData;
+  if (!data || !data.ai_diagnosis) { section.innerHTML = ''; return; }
+
+  const bt = window._backtestSummary;
+  const btSentence = bt
+    ? ` なお、同ロジックのバックテストでは過去${bt.total_trades}回のシグナルに対し勝率${bt.win_rate}%という実績があります(将来の成績を保証するものではありません)。`
+    : '';
+
+  section.innerHTML = `
+    <div class="ai-diagnosis-card">
+      <div class="ai-diagnosis-header">
+        <span class="ai-diagnosis-badge">AI</span>
+        <span class="ai-diagnosis-title">AI診断コメント</span>
+      </div>
+      <div class="ai-diagnosis-text">${data.ai_diagnosis}${btSentence}</div>
+      <div class="ai-diagnosis-footnote">※テクニカル指標をもとにルールベースで自動生成されたコメントです。投資助言ではありません。</div>
+    </div>
+  `;
+}
 
 function renderTopStatsBanner() {
   const section = document.getElementById('top-stats-section');
