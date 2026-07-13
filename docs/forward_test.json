@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-11T03:59:38.193694+00:00",
-  "total_history_points": 706,
+  "generated_at": "2026-07-13T04:24:33.506911+00:00",
+  "total_history_points": 743,
   "total_signals": 30,
   "overall": {
     "30min": {
@@ -45,12 +45,12 @@
     },
     "120min": {
       "買い": {
-        "n": 13,
+        "n": 14,
         "win": 4,
-        "lose": 9,
+        "lose": 10,
         "flat": 0,
-        "win_rate": 30.8,
-        "avg_change_points": 9.62,
+        "win_rate": 28.6,
+        "avg_change_points": 6.79,
         "sufficient_data": true
       },
       "売り": {
