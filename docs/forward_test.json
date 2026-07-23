@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-07-22T04:11:28.814929+00:00",
-  "total_history_points": 1733,
-  "total_signals": 75,
+  "generated_at": "2026-07-23T04:09:24.879225+00:00",
+  "total_history_points": 1876,
+  "total_signals": 78,
   "overall": {
     "30min": {
       "買い": {
-        "n": 39,
-        "win": 21,
-        "lose": 17,
+        "n": 42,
+        "win": 23,
+        "lose": 18,
         "flat": 1,
-        "win_rate": 53.8,
-        "avg_change_points": 36.41,
+        "win_rate": 54.8,
+        "avg_change_points": 44.29,
         "sufficient_data": true
       },
       "売り": {
@@ -25,12 +25,12 @@
     },
     "60min": {
       "買い": {
-        "n": 39,
-        "win": 19,
-        "lose": 19,
+        "n": 42,
+        "win": 21,
+        "lose": 20,
         "flat": 1,
-        "win_rate": 48.7,
-        "avg_change_points": 16.92,
+        "win_rate": 50.0,
+        "avg_change_points": 20.83,
         "sufficient_data": true
       },
       "売り": {
@@ -45,12 +45,12 @@
     },
     "120min": {
       "買い": {
-        "n": 39,
-        "win": 15,
-        "lose": 23,
+        "n": 42,
+        "win": 16,
+        "lose": 25,
         "flat": 1,
-        "win_rate": 38.5,
-        "avg_change_points": -17.18,
+        "win_rate": 38.1,
+        "avg_change_points": -19.05,
         "sufficient_data": true
       },
       "売り": {
@@ -107,18 +107,18 @@
     },
     {
       "label": "5時",
-      "n": 8,
+      "n": 9,
       "win": 3,
-      "lose": 5,
-      "win_rate": 37.5,
+      "lose": 6,
+      "win_rate": 33.3,
       "sufficient_data": true
     },
     {
       "label": "8時",
-      "n": 1,
-      "win": 0,
+      "n": 2,
+      "win": 1,
       "lose": 1,
-      "win_rate": 0.0,
+      "win_rate": 50.0,
       "sufficient_data": false
     },
     {
@@ -203,8 +203,8 @@
     },
     {
       "label": "19時",
-      "n": 1,
-      "win": 1,
+      "n": 2,
+      "win": 2,
       "lose": 0,
       "win_rate": 100.0,
       "sufficient_data": false
@@ -261,17 +261,17 @@
     },
     {
       "label": "水",
-      "n": 14,
-      "win": 10,
+      "n": 15,
+      "win": 11,
       "lose": 4,
-      "win_rate": 71.4,
+      "win_rate": 73.3,
       "sufficient_data": true
     },
     {
       "label": "木",
-      "n": 12,
-      "win": 6,
-      "lose": 6,
+      "n": 14,
+      "win": 7,
+      "lose": 7,
       "win_rate": 50.0,
       "sufficient_data": true
     },
