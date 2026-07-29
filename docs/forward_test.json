@@ -1,65 +1,65 @@
 {
-  "generated_at": "2026-07-28T03:54:24.860090+00:00",
-  "total_history_points": 2298,
-  "total_signals": 97,
+  "generated_at": "2026-07-29T03:58:44.231209+00:00",
+  "total_history_points": 2440,
+  "total_signals": 102,
   "overall": {
     "30min": {
       "買い": {
-        "n": 52,
-        "win": 27,
-        "lose": 24,
+        "n": 55,
+        "win": 29,
+        "lose": 25,
         "flat": 1,
-        "win_rate": 51.9,
-        "avg_change_points": 36.83,
+        "win_rate": 52.7,
+        "avg_change_points": 29.45,
         "sufficient_data": true
       },
       "売り": {
-        "n": 45,
-        "win": 19,
+        "n": 47,
+        "win": 21,
         "lose": 25,
         "flat": 1,
-        "win_rate": 42.2,
-        "avg_change_points": -42.89,
+        "win_rate": 44.7,
+        "avg_change_points": -32.98,
         "sufficient_data": true
       }
     },
     "60min": {
       "買い": {
-        "n": 52,
-        "win": 27,
-        "lose": 24,
+        "n": 55,
+        "win": 29,
+        "lose": 25,
         "flat": 1,
-        "win_rate": 51.9,
-        "avg_change_points": 0.48,
+        "win_rate": 52.7,
+        "avg_change_points": -8.55,
         "sufficient_data": true
       },
       "売り": {
-        "n": 45,
-        "win": 25,
+        "n": 47,
+        "win": 27,
         "lose": 20,
         "flat": 0,
-        "win_rate": 55.6,
-        "avg_change_points": 7.11,
+        "win_rate": 57.4,
+        "avg_change_points": 17.23,
         "sufficient_data": true
       }
     },
     "120min": {
       "買い": {
-        "n": 52,
-        "win": 22,
-        "lose": 29,
+        "n": 55,
+        "win": 24,
+        "lose": 30,
         "flat": 1,
-        "win_rate": 42.3,
-        "avg_change_points": -51.35,
+        "win_rate": 43.6,
+        "avg_change_points": -39.82,
         "sufficient_data": true
       },
       "売り": {
-        "n": 45,
-        "win": 20,
-        "lose": 25,
+        "n": 47,
+        "win": 21,
+        "lose": 26,
         "flat": 0,
-        "win_rate": 44.4,
-        "avg_change_points": -20.56,
+        "win_rate": 44.7,
+        "avg_change_points": -26.6,
         "sufficient_data": true
       }
     }
@@ -115,9 +115,9 @@
     },
     {
       "label": "7時",
-      "n": 2,
-      "win": 1,
-      "lose": 1,
+      "n": 4,
+      "win": 2,
+      "lose": 2,
       "win_rate": 50.0,
       "sufficient_data": false
     },
@@ -179,11 +179,11 @@
     },
     {
       "label": "15時",
-      "n": 4,
-      "win": 0,
+      "n": 5,
+      "win": 1,
       "lose": 4,
-      "win_rate": 0.0,
-      "sufficient_data": false
+      "win_rate": 20.0,
+      "sufficient_data": true
     },
     {
       "label": "16時",
@@ -195,18 +195,18 @@
     },
     {
       "label": "17時",
-      "n": 7,
-      "win": 3,
+      "n": 8,
+      "win": 4,
       "lose": 4,
-      "win_rate": 42.9,
+      "win_rate": 50.0,
       "sufficient_data": true
     },
     {
       "label": "18時",
-      "n": 2,
-      "win": 1,
+      "n": 3,
+      "win": 2,
       "lose": 1,
-      "win_rate": 50.0,
+      "win_rate": 66.7,
       "sufficient_data": false
     },
     {
@@ -261,18 +261,18 @@
     },
     {
       "label": "火",
-      "n": 23,
-      "win": 8,
+      "n": 26,
+      "win": 11,
       "lose": 14,
-      "win_rate": 34.8,
+      "win_rate": 42.3,
       "sufficient_data": true
     },
     {
       "label": "水",
-      "n": 15,
-      "win": 11,
-      "lose": 4,
-      "win_rate": 73.3,
+      "n": 17,
+      "win": 12,
+      "lose": 5,
+      "win_rate": 70.6,
       "sufficient_data": true
     },
     {
