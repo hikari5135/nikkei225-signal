@@ -1,84 +1,55 @@
 {
-  "updated_at": "2026-07-30T02:00:46.243928+00:00",
-  "latest_time": "2026-07-30 10:50",
-  "latest_close": 62835.0,
-  "signal": "様子見",
-  "score": -1.5,
-  "score_normalized": -21,
+  "updated_at": "2026-07-30T02:10:30.500241+00:00",
+  "latest_time": "2026-07-30 11:00",
+  "latest_close": 62770.0,
+  "signal": "売り",
+  "score": -3.0,
+  "score_normalized": -43,
   "reasons": [
-    "RSI=83.3 (overbought)"
+    "RSI=70.7 (overbought)",
+    "MACD histogram turned negative"
   ],
-  "stop_price": null,
-  "take_profit": null,
-  "risk_reward": null,
+  "stop_price": 63340.0,
+  "take_profit": 61630.0,
+  "risk_reward": 2.0,
   "score_breakdown": {
     "MA": 0,
     "RSI": -1.5,
-    "MACD": 0,
+    "MACD": -1.5,
     "BB": 0
   },
-  "stars": 2,
-  "star_label": "弱い売り",
+  "stars": 3,
+  "star_label": "売り",
   "current_state": [
-    "MA5(62874)がMA25(62319)を上回っており、短期は上昇基調",
-    "RSI=83.3で過熱(買われすぎ)水準",
-    "MACDヒストグラムはプラス(上昇モメンタム)",
+    "MA5(62829)がMA25(62412)を上回っており、短期は上昇基調",
+    "RSI=70.7で過熱(買われすぎ)水準",
+    "MACDヒストグラムはマイナス(下降モメンタム)",
     "価格はボリンジャーバンドの通常レンジ内"
   ],
-  "summary": "短期は上昇基調、MACDは上向き、RSI(83)が過熱気味のため「様子見」と判定。 1時間足では「様子見」。 複合判定は「方向感なし」。",
-  "ai_diagnosis": "現在は複数の指標が方向感に乏しく、弱いシグナルしか出ていないため「様子見」と判断しています。無理にポジションを取らず、次に明確なシグナルが出るのを待つのが合理的な局面です。 ただし複数時間軸で見ると判定は「方向感なし」となっており、時間軸によって見方が分かれている点には注意が必要です。",
-  "atr": 218.57,
+  "summary": "短期は上昇基調、MACDは下向き、RSI(71)が過熱気味のため「売り」と判定。 1時間足では「買い」。 複合判定は「方向感なし」。",
+  "ai_diagnosis": "移動平均線は上昇基調にあり、MACDも下向きに推移していることから、一定の「売り」シグナルが点灯しています。RSIは過熱感が意識される水準にあります。 ただし複数時間軸で見ると判定は「方向感なし」となっており、時間軸によって見方が分かれている点には注意が必要です。",
+  "atr": 190.0,
   "suggested_levels": {
     "buy": {
-      "entry": 62835.0,
-      "sl": 62179.29,
-      "tp1": 63818.57,
-      "tp2": 64802.14,
+      "entry": 62770.0,
+      "sl": 62200.0,
+      "tp1": 63625.0,
+      "tp2": 64480.0,
       "rr1": 1.5,
       "rr2": 3.0
     },
     "sell": {
-      "entry": 62835.0,
-      "sl": 63490.71,
-      "tp1": 61851.43,
-      "tp2": 60867.86,
+      "entry": 62770.0,
+      "sl": 63340.0,
+      "tp1": 61915.0,
+      "tp2": 61060.0,
       "rr1": 1.5,
       "rr2": 3.0
     }
   },
-  "daily_change": 965.0,
-  "daily_change_pct": 1.56,
+  "daily_change": 900.0,
+  "daily_change_pct": 1.45,
   "candles": [
-    {
-      "time": "2026-07-30 01:30",
-      "open": 61765.0,
-      "high": 61820.0,
-      "low": 61690.0,
-      "close": 61690.0,
-      "ma5": 61595.0,
-      "ma25": 61764.6,
-      "rsi": 40.1,
-      "macd": -137.09,
-      "macd_signal": -158.64,
-      "macd_hist": 21.55,
-      "bb_upper": 62039.1,
-      "bb_lower": 61437.9
-    },
-    {
-      "time": "2026-07-30 01:35",
-      "open": 61685.0,
-      "high": 61700.0,
-      "low": 61625.0,
-      "close": 61690.0,
-      "ma5": 61649.0,
-      "ma25": 61752.2,
-      "rsi": 43.1,
-      "macd": -125.34,
-      "macd_signal": -151.98,
-      "macd_hist": 26.64,
-      "bb_upper": 62024.24,
-      "bb_lower": 61434.76
-    },
     {
       "time": "2026-07-30 01:40",
       "open": 61690.0,
@@ -88,8 +59,8 @@
       "ma5": 61674.0,
       "ma25": 61741.8,
       "rsi": 39.1,
-      "macd": -121.09,
-      "macd_signal": -145.8,
+      "macd": -121.08,
+      "macd_signal": -145.79,
       "macd_hist": 24.71,
       "bb_upper": 61994.79,
       "bb_lower": 61431.21
@@ -103,9 +74,9 @@
       "ma5": 61691.0,
       "ma25": 61738.8,
       "rsi": 45.5,
-      "macd": -107.61,
-      "macd_signal": -138.16,
-      "macd_hist": 30.56,
+      "macd": -107.59,
+      "macd_signal": -138.15,
+      "macd_hist": 30.55,
       "bb_upper": 61960.41,
       "bb_lower": 61442.59
     },
@@ -118,9 +89,9 @@
       "ma5": 61689.0,
       "ma25": 61735.8,
       "rsi": 49.1,
-      "macd": -94.62,
-      "macd_signal": -129.46,
-      "macd_hist": 34.84,
+      "macd": -94.61,
+      "macd_signal": -129.44,
+      "macd_hist": 34.83,
       "bb_upper": 61943.88,
       "bb_lower": 61446.62
     },
@@ -133,9 +104,9 @@
       "ma5": 61712.0,
       "ma25": 61733.2,
       "rsi": 50.2,
-      "macd": -77.78,
-      "macd_signal": -119.12,
-      "macd_hist": 41.34,
+      "macd": -77.77,
+      "macd_signal": -119.11,
+      "macd_hist": 41.33,
       "bb_upper": 61945.92,
       "bb_lower": 61446.08
     },
@@ -148,9 +119,9 @@
       "ma5": 61767.0,
       "ma25": 61737.0,
       "rsi": 62.7,
-      "macd": -50.94,
-      "macd_signal": -105.48,
-      "macd_hist": 54.55,
+      "macd": -50.93,
+      "macd_signal": -105.47,
+      "macd_hist": 54.54,
       "bb_upper": 61963.78,
       "bb_lower": 61435.72
     },
@@ -163,8 +134,8 @@
       "ma5": 61830.0,
       "ma25": 61736.4,
       "rsi": 59.6,
-      "macd": -32.52,
-      "macd_signal": -90.89,
+      "macd": -32.51,
+      "macd_signal": -90.88,
       "macd_hist": 58.37,
       "bb_upper": 61982.91,
       "bb_lower": 61427.09
@@ -178,8 +149,8 @@
       "ma5": 61900.0,
       "ma25": 61741.2,
       "rsi": 72.7,
-      "macd": -6.15,
-      "macd_signal": -73.94,
+      "macd": -6.14,
+      "macd_signal": -73.93,
       "macd_hist": 67.79,
       "bb_upper": 62035.41,
       "bb_lower": 61398.59
@@ -193,8 +164,8 @@
       "ma5": 61962.0,
       "ma25": 61748.6,
       "rsi": 72.7,
-      "macd": 12.58,
-      "macd_signal": -56.64,
+      "macd": 12.59,
+      "macd_signal": -56.63,
       "macd_hist": 69.22,
       "bb_upper": 62076.48,
       "bb_lower": 61380.02
@@ -208,8 +179,8 @@
       "ma5": 62006.0,
       "ma25": 61758.0,
       "rsi": 78.9,
-      "macd": 25.52,
-      "macd_signal": -40.2,
+      "macd": 25.53,
+      "macd_signal": -40.19,
       "macd_hist": 65.73,
       "bb_upper": 62114.43,
       "bb_lower": 61369.07
@@ -224,7 +195,7 @@
       "ma25": 61760.8,
       "rsi": 72.7,
       "macd": 30.19,
-      "macd_signal": -26.13,
+      "macd_signal": -26.12,
       "macd_hist": 56.31,
       "bb_upper": 62134.37,
       "bb_lower": 61365.13
@@ -238,8 +209,8 @@
       "ma5": 62017.0,
       "ma25": 61767.4,
       "rsi": 69.0,
-      "macd": 35.49,
-      "macd_signal": -13.8,
+      "macd": 35.5,
+      "macd_signal": -13.79,
       "macd_hist": 49.29,
       "bb_upper": 62161.96,
       "bb_lower": 61368.04
@@ -253,7 +224,7 @@
       "ma5": 61996.0,
       "ma25": 61772.8,
       "rsi": 63.3,
-      "macd": 37.64,
+      "macd": 37.65,
       "macd_signal": -3.51,
       "macd_hist": 41.16,
       "bb_upper": 62183.62,
@@ -269,7 +240,7 @@
       "ma25": 61779.4,
       "rsi": 68.6,
       "macd": 40.5,
-      "macd_signal": 5.29,
+      "macd_signal": 5.3,
       "macd_hist": 35.21,
       "bb_upper": 62200.92,
       "bb_lower": 61398.08
@@ -284,7 +255,7 @@
       "ma25": 61789.4,
       "rsi": 69.3,
       "macd": 43.87,
-      "macd_signal": 13.0,
+      "macd_signal": 13.01,
       "macd_hist": 30.86,
       "bb_upper": 62213.58,
       "bb_lower": 61432.92
@@ -299,8 +270,8 @@
       "ma25": 61799.4,
       "rsi": 78.2,
       "macd": 49.6,
-      "macd_signal": 20.32,
-      "macd_hist": 29.28,
+      "macd_signal": 20.33,
+      "macd_hist": 29.27,
       "bb_upper": 62207.98,
       "bb_lower": 61501.52
     },
@@ -314,8 +285,8 @@
       "ma25": 61815.0,
       "rsi": 75.4,
       "macd": 55.12,
-      "macd_signal": 27.28,
-      "macd_hist": 27.84,
+      "macd_signal": 27.29,
+      "macd_hist": 27.83,
       "bb_upper": 62203.6,
       "bb_lower": 61564.4
     },
@@ -329,7 +300,7 @@
       "ma25": 61843.8,
       "rsi": 83.5,
       "macd": 87.14,
-      "macd_signal": 39.25,
+      "macd_signal": 39.26,
       "macd_hist": 47.88,
       "bb_upper": 62303.15,
       "bb_lower": 61543.85
@@ -360,7 +331,7 @@
       "rsi": 75.0,
       "macd": 125.64,
       "macd_signal": 68.05,
-      "macd_hist": 57.6,
+      "macd_hist": 57.59,
       "bb_upper": 62443.73,
       "bb_lower": 61540.77
     },
@@ -374,8 +345,8 @@
       "ma25": 61947.0,
       "rsi": 69.2,
       "macd": 126.73,
-      "macd_signal": 79.78,
-      "macd_hist": 46.95,
+      "macd_signal": 79.79,
+      "macd_hist": 46.94,
       "bb_upper": 62466.28,
       "bb_lower": 61576.72
     },
@@ -389,7 +360,7 @@
       "ma25": 61978.6,
       "rsi": 63.4,
       "macd": 126.14,
-      "macd_signal": 89.05,
+      "macd_signal": 89.06,
       "macd_hist": 37.08,
       "bb_upper": 62468.34,
       "bb_lower": 61641.16
@@ -405,7 +376,7 @@
       "rsi": 65.5,
       "macd": 124.24,
       "macd_signal": 96.09,
-      "macd_hist": 28.15,
+      "macd_hist": 28.14,
       "bb_upper": 62475.48,
       "bb_lower": 61689.52
     },
@@ -434,7 +405,7 @@
       "ma25": 62060.8,
       "rsi": 82.0,
       "macd": 141.42,
-      "macd_signal": 109.32,
+      "macd_signal": 109.33,
       "macd_hist": 32.1,
       "bb_upper": 62538.36,
       "bb_lower": 61757.64
@@ -525,7 +496,7 @@
       "rsi": 65.5,
       "macd": 234.27,
       "macd_signal": 202.54,
-      "macd_hist": 31.74,
+      "macd_hist": 31.73,
       "bb_upper": 63116.84,
       "bb_lower": 61696.16
     },
@@ -540,7 +511,7 @@
       "rsi": 58.7,
       "macd": 219.63,
       "macd_signal": 205.96,
-      "macd_hist": 13.68,
+      "macd_hist": 13.67,
       "bb_upper": 63130.11,
       "bb_lower": 61750.39
     },
@@ -554,7 +525,7 @@
       "ma25": 62372.2,
       "rsi": 52.0,
       "macd": 191.7,
-      "macd_signal": 203.1,
+      "macd_signal": 203.11,
       "macd_hist": -11.41,
       "bb_upper": 63118.89,
       "bb_lower": 61813.61
@@ -689,7 +660,7 @@
       "ma25": 62286.2,
       "rsi": 4.4,
       "macd": -216.93,
-      "macd_signal": -54.31,
+      "macd_signal": -54.3,
       "macd_hist": -162.62,
       "bb_upper": 63382.49,
       "bb_lower": 61154.51
@@ -749,7 +720,7 @@
       "ma25": 62089.0,
       "rsi": 2.2,
       "macd": -314.37,
-      "macd_signal": -196.33,
+      "macd_signal": -196.32,
       "macd_hist": -118.04,
       "bb_upper": 63384.47,
       "bb_lower": 60615.53
@@ -764,7 +735,7 @@
       "ma25": 62037.6,
       "rsi": 2.2,
       "macd": -331.98,
-      "macd_signal": -223.46,
+      "macd_signal": -223.45,
       "macd_hist": -108.52,
       "bb_upper": 63283.93,
       "bb_lower": 60521.57
@@ -1033,7 +1004,7 @@
       "ma5": 61509.0,
       "ma25": 61273.0,
       "rsi": 84.7,
-      "macd": -34.9,
+      "macd": -34.89,
       "macd_signal": -102.71,
       "macd_hist": 67.82,
       "bb_upper": 61705.63,
@@ -1537,17 +1508,47 @@
     {
       "time": "2026-07-30 10:50",
       "open": 62920.0,
-      "high": 62920.0,
+      "high": 62965.0,
       "low": 62785.0,
-      "close": 62835.0,
-      "ma5": 62874.0,
-      "ma25": 62319.2,
-      "rsi": 83.3,
-      "macd": 282.14,
-      "macd_signal": 256.76,
-      "macd_hist": 25.38,
-      "bb_upper": 63149.44,
-      "bb_lower": 61812.56
+      "close": 62830.0,
+      "ma5": 62873.0,
+      "ma25": 62319.0,
+      "rsi": 83.1,
+      "macd": 281.74,
+      "macd_signal": 256.68,
+      "macd_hist": 25.06,
+      "bb_upper": 63148.64,
+      "bb_lower": 61812.86
+    },
+    {
+      "time": "2026-07-30 10:55",
+      "open": 62830.0,
+      "high": 62890.0,
+      "low": 62695.0,
+      "close": 62735.0,
+      "ma5": 62854.0,
+      "ma25": 62362.4,
+      "rsi": 71.7,
+      "macd": 266.08,
+      "macd_signal": 258.56,
+      "macd_hist": 7.52,
+      "bb_upper": 63163.94,
+      "bb_lower": 61861.56
+    },
+    {
+      "time": "2026-07-30 11:00",
+      "open": 62720.0,
+      "high": 62850.0,
+      "low": 62715.0,
+      "close": 62770.0,
+      "ma5": 62829.0,
+      "ma25": 62412.0,
+      "rsi": 70.7,
+      "macd": 253.56,
+      "macd_signal": 257.56,
+      "macd_hist": -4.0,
+      "bb_upper": 63189.86,
+      "bb_lower": 61878.14
     }
   ],
   "data_source": "NIY=F",
@@ -1557,17 +1558,17 @@
       "signal": "様子見",
       "score": 0,
       "score_normalized": 0,
-      "close": 62835.0,
-      "time": "2026-07-30 10:45",
+      "close": 62770.0,
+      "time": "2026-07-30 11:00",
       "data_source": "NIY=F"
     },
     "1h": {
       "label": "1時間足",
-      "signal": "様子見",
-      "score": 1.5,
-      "score_normalized": 21,
-      "close": 62835.0,
-      "time": "2026-07-30 10:00",
+      "signal": "買い",
+      "score": 3,
+      "score_normalized": 43,
+      "close": 62770.0,
+      "time": "2026-07-30 11:00",
       "data_source": "NIY=F"
     }
   },
@@ -1577,27 +1578,27 @@
       {
         "time": "2026-07-31 12:00",
         "label": "日銀金融政策決定会合(結果発表・目安)",
-        "hours_until": 25.2
+        "hours_until": 25.0
       },
       {
         "time": "2026-08-07 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 202.7
+        "hours_until": 202.5
       },
       {
         "time": "2026-09-04 21:30",
         "label": "米雇用統計(NFP)",
-        "hours_until": 874.7
+        "hours_until": 874.5
       },
       {
         "time": "2026-09-17 03:00",
         "label": "FOMC政策金利発表",
-        "hours_until": 1168.2
+        "hours_until": 1168.0
       },
       {
         "time": "2026-09-18 12:00",
         "label": "日銀金融政策決定会合(結果発表・目安)",
-        "hours_until": 1201.2
+        "hours_until": 1201.0
       }
     ],
     "warning": false,
