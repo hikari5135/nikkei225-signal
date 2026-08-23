@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-22T02:08:57.429278+00:00",
+  "updated_at": "2026-08-23T02:18:29.753695+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-06-11 16:45",
   "period_end": "2026-08-22 05:55",
@@ -10,13 +10,13 @@
     "win_trades": 27,
     "lose_trades": 33,
     "win_rate": 45.0,
-    "total_pnl": -10655.0,
-    "avg_win": 813.52,
+    "total_pnl": -10720.0,
+    "avg_win": 811.11,
     "avg_loss": -988.48,
     "max_win": 2975.0,
     "max_loss": -3940.0,
     "max_drawdown": -14435.0,
-    "expectancy": -177.58,
+    "expectancy": -178.67,
     "profit_factor": 0.67
   },
   "trades": [
@@ -416,9 +416,9 @@
       "side": "long",
       "entry_price": 65820.0,
       "entry_time": "2026-08-22 00:20",
-      "exit_price": 65980.0,
+      "exit_price": 65915.0,
       "exit_time": "2026-08-22 05:55",
-      "pnl": 160.0
+      "pnl": 95.0
     }
   ],
   "equity_curve": [
@@ -779,8 +779,8 @@
     {
       "trade_no": 60,
       "exit_time": "2026-08-22 05:55",
-      "cumulative_pnl": -10655.0,
-      "drawdown": -10410.0
+      "cumulative_pnl": -10720.0,
+      "drawdown": -10475.0
     }
   ]
 }
