@@ -1,24 +1,32 @@
 {
-  "updated_at": "2026-08-24T02:17:11.559559+00:00",
+  "updated_at": "2026-08-25T02:12:36.066770+00:00",
   "data_source": "NIY=F",
-  "period_start": "2024-04-02 14:00",
-  "period_end": "2026-08-24 11:00",
+  "period_start": "2024-04-03 14:00",
+  "period_end": "2026-08-25 11:00",
   "unit_note": "1時間足を使った長期検証です(約2年分)。実際のライブシステムは5分足でシグナル判定しているため、この結果は5分足の精度をそのまま代表するものではなく、同じロジックを長期間・粗い足で見た場合の参考値です。損益は日経225指数ポイント換算(円換算・手数料/スプレッド控除前の理論値)。",
   "summary": {
-    "total_trades": 522,
+    "total_trades": 521,
     "win_trades": 182,
-    "lose_trades": 340,
+    "lose_trades": 339,
     "win_rate": 34.9,
-    "total_pnl": 4755.0,
+    "total_pnl": 4165.0,
     "avg_win": 658.32,
-    "avg_loss": -338.41,
+    "avg_loss": -341.15,
     "max_win": 5175.0,
     "max_loss": -3775.0,
     "max_drawdown": -11250.0,
-    "expectancy": 9.11,
+    "expectancy": 7.99,
     "profit_factor": 1.04
   },
   "trades": [
+    {
+      "side": "short",
+      "entry_price": 68500.0,
+      "entry_time": "2026-06-03 20:00",
+      "exit_price": 67765.0,
+      "exit_time": "2026-06-05 04:00",
+      "pnl": 735.0
+    },
     {
       "side": "long",
       "entry_price": 67765.0,
@@ -407,21 +415,19 @@
       "side": "long",
       "entry_price": 65990.0,
       "entry_time": "2026-08-21 13:00",
-      "exit_price": 65805.0,
-      "exit_time": "2026-08-24 11:00",
-      "pnl": -185.0
-    },
-    {
-      "side": "short",
-      "entry_price": 65805.0,
-      "entry_time": "2026-08-24 11:00",
-      "exit_price": 65805.0,
-      "exit_time": "2026-08-24 11:00",
-      "pnl": 0.0,
+      "exit_price": 65215.0,
+      "exit_time": "2026-08-25 11:00",
+      "pnl": -775.0,
       "forced_exit": true
     }
   ],
   "equity_curve": [
+    {
+      "trade_no": 322,
+      "exit_time": "2025-09-16 20:00",
+      "cumulative_pnl": -1460.0,
+      "drawdown": -4035.0
+    },
     {
       "trade_no": 323,
       "exit_time": "2025-09-16 22:00",
@@ -1612,15 +1618,9 @@
     },
     {
       "trade_no": 521,
-      "exit_time": "2026-08-24 11:00",
-      "cumulative_pnl": 4755.0,
-      "drawdown": -3725.0
-    },
-    {
-      "trade_no": 522,
-      "exit_time": "2026-08-24 11:00",
-      "cumulative_pnl": 4755.0,
-      "drawdown": -3725.0
+      "exit_time": "2026-08-25 11:00",
+      "cumulative_pnl": 4165.0,
+      "drawdown": -4315.0
     }
   ]
 }
