@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-07T05:26:33.989669+00:00",
-  "total_history_points": 3136,
-  "total_signals": 141,
+  "generated_at": "2026-09-08T05:26:56.852346+00:00",
+  "total_history_points": 3138,
+  "total_signals": 142,
   "overall": {
     "30min": {
       "買い": {
-        "n": 71,
-        "win": 38,
+        "n": 72,
+        "win": 39,
         "lose": 32,
         "flat": 1,
-        "win_rate": 53.5,
-        "avg_change_points": 23.87,
+        "win_rate": 54.2,
+        "avg_change_points": 26.12,
         "sufficient_data": true
       },
       "売り": {
@@ -25,12 +25,12 @@
     },
     "60min": {
       "買い": {
-        "n": 71,
-        "win": 38,
+        "n": 72,
+        "win": 39,
         "lose": 32,
         "flat": 1,
-        "win_rate": 53.5,
-        "avg_change_points": -4.72,
+        "win_rate": 54.2,
+        "avg_change_points": -2.07,
         "sufficient_data": true
       },
       "売り": {
@@ -45,12 +45,12 @@
     },
     "120min": {
       "買い": {
-        "n": 71,
-        "win": 35,
+        "n": 72,
+        "win": 36,
         "lose": 35,
         "flat": 1,
-        "win_rate": 49.3,
-        "avg_change_points": 27.54,
+        "win_rate": 50.0,
+        "avg_change_points": 29.73,
         "sufficient_data": true
       },
       "売り": {
@@ -179,10 +179,10 @@
     },
     {
       "label": "15時",
-      "n": 7,
-      "win": 3,
+      "n": 8,
+      "win": 4,
       "lose": 4,
-      "win_rate": 42.9,
+      "win_rate": 50.0,
       "sufficient_data": true
     },
     {
@@ -253,10 +253,10 @@
   "by_weekday": [
     {
       "label": "月",
-      "n": 19,
-      "win": 13,
+      "n": 20,
+      "win": 14,
       "lose": 6,
-      "win_rate": 68.4,
+      "win_rate": 70.0,
       "sufficient_data": true
     },
     {
