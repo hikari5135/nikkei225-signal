@@ -1,33 +1,25 @@
 {
-  "updated_at": "2026-09-18T05:23:42.679936+00:00",
+  "updated_at": "2026-09-19T05:17:01.211799+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-07-10 15:05",
-  "period_end": "2026-09-18 14:10",
-  "total_days": 60,
+  "period_end": "2026-09-19 05:55",
+  "total_days": 61,
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)。1日1回・その日最初のシグナルのみ採用し、当日中に強制決済するルールです。",
   "summary": {
-    "total_trades": 59,
-    "win_trades": 25,
+    "total_trades": 60,
+    "win_trades": 26,
     "lose_trades": 34,
-    "win_rate": 42.4,
-    "total_pnl": -2310.0,
-    "avg_win": 693.0,
+    "win_rate": 43.3,
+    "total_pnl": -2430.0,
+    "avg_win": 661.73,
     "avg_loss": -577.5,
     "max_win": 2975.0,
     "max_loss": -1710.0,
     "max_drawdown": -9840.0,
-    "expectancy": -39.15,
+    "expectancy": -40.5,
     "profit_factor": 0.88
   },
   "trades": [
-    {
-      "side": "long",
-      "entry_price": 65730.0,
-      "entry_time": "2026-07-21 00:55",
-      "exit_price": 67020.0,
-      "exit_time": "2026-07-21 23:55",
-      "pnl": 1290.0
-    },
     {
       "side": "short",
       "entry_price": 67280.0,
@@ -416,9 +408,17 @@
       "side": "long",
       "entry_price": 64765.0,
       "entry_time": "2026-09-18 01:00",
-      "exit_price": 65150.0,
-      "exit_time": "2026-09-18 14:10",
-      "pnl": 385.0
+      "exit_price": 64885.0,
+      "exit_time": "2026-09-18 23:55",
+      "pnl": 120.0
+    },
+    {
+      "side": "long",
+      "entry_price": 64770.0,
+      "entry_time": "2026-09-19 02:05",
+      "exit_price": 64915.0,
+      "exit_time": "2026-09-19 05:55",
+      "pnl": 145.0
     }
   ],
   "equity_curve": [
@@ -772,9 +772,15 @@
     },
     {
       "trade_no": 59,
-      "exit_time": "2026-09-18 14:10",
-      "cumulative_pnl": -2310.0,
-      "drawdown": -6370.0
+      "exit_time": "2026-09-18 23:55",
+      "cumulative_pnl": -2575.0,
+      "drawdown": -6635.0
+    },
+    {
+      "trade_no": 60,
+      "exit_time": "2026-09-19 05:55",
+      "cumulative_pnl": -2430.0,
+      "drawdown": -6490.0
     }
   ]
 }
