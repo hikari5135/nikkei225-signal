@@ -1,33 +1,25 @@
 {
-  "updated_at": "2026-10-09T06:57:42.086365+00:00",
+  "updated_at": "2026-10-10T06:32:25.306472+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-07-31 15:05",
-  "period_end": "2026-10-09 15:45",
-  "total_days": 60,
+  "period_end": "2026-10-10 05:55",
+  "total_days": 61,
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)。1日1回・その日最初のシグナルのみ採用し、当日中に強制決済するルールです。",
   "summary": {
-    "total_trades": 59,
+    "total_trades": 60,
     "win_trades": 27,
-    "lose_trades": 32,
-    "win_rate": 45.8,
-    "total_pnl": -1255.0,
-    "avg_win": 682.41,
-    "avg_loss": -615.0,
+    "lose_trades": 33,
+    "win_rate": 45.0,
+    "total_pnl": -1550.0,
+    "avg_win": 673.52,
+    "avg_loss": -598.03,
     "max_win": 2975.0,
     "max_loss": -1705.0,
     "max_drawdown": -5150.0,
-    "expectancy": -21.27,
-    "profit_factor": 0.94
+    "expectancy": -25.83,
+    "profit_factor": 0.92
   },
   "trades": [
-    {
-      "side": "short",
-      "entry_price": 67245.0,
-      "entry_time": "2026-08-12 00:20",
-      "exit_price": 68635.0,
-      "exit_time": "2026-08-12 23:55",
-      "pnl": -1390.0
-    },
     {
       "side": "short",
       "entry_price": 68640.0,
@@ -416,9 +408,17 @@
       "side": "long",
       "entry_price": 69090.0,
       "entry_time": "2026-10-09 01:30",
-      "exit_price": 69400.0,
-      "exit_time": "2026-10-09 15:45",
-      "pnl": 310.0
+      "exit_price": 69035.0,
+      "exit_time": "2026-10-09 23:55",
+      "pnl": -55.0
+    },
+    {
+      "side": "long",
+      "entry_price": 68980.0,
+      "entry_time": "2026-10-10 02:55",
+      "exit_price": 69050.0,
+      "exit_time": "2026-10-10 05:55",
+      "pnl": 70.0
     }
   ],
   "equity_curve": [
@@ -772,9 +772,15 @@
     },
     {
       "trade_no": 59,
-      "exit_time": "2026-10-09 15:45",
-      "cumulative_pnl": -1255.0,
-      "drawdown": -1970.0
+      "exit_time": "2026-10-09 23:55",
+      "cumulative_pnl": -1620.0,
+      "drawdown": -2335.0
+    },
+    {
+      "trade_no": 60,
+      "exit_time": "2026-10-10 05:55",
+      "cumulative_pnl": -1550.0,
+      "drawdown": -2265.0
     }
   ]
 }

@@ -1,41 +1,25 @@
 {
-  "updated_at": "2026-10-09T06:57:40.777832+00:00",
+  "updated_at": "2026-10-10T06:32:24.232225+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-07-31 15:05",
-  "period_end": "2026-10-09 15:45",
+  "period_end": "2026-10-10 05:55",
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)",
   "summary": {
-    "total_trades": 577,
+    "total_trades": 579,
     "win_trades": 187,
-    "lose_trades": 390,
+    "lose_trades": 392,
     "stop_loss_trades": 0,
-    "win_rate": 32.4,
-    "total_pnl": 1470.0,
-    "avg_win": 277.25,
-    "avg_loss": -129.17,
+    "win_rate": 32.3,
+    "total_pnl": 1100.0,
+    "avg_win": 277.17,
+    "avg_loss": -129.41,
     "max_win": 1160.0,
     "max_loss": -1330.0,
     "max_drawdown": -6645.0,
-    "expectancy": 2.55,
-    "profit_factor": 1.03
+    "expectancy": 1.9,
+    "profit_factor": 1.02
   },
   "trades": [
-    {
-      "side": "short",
-      "entry_price": 70110.0,
-      "entry_time": "2026-10-05 17:10",
-      "exit_price": 70130.0,
-      "exit_time": "2026-10-05 22:30",
-      "pnl": -20.0
-    },
-    {
-      "side": "long",
-      "entry_price": 70130.0,
-      "entry_time": "2026-10-05 22:30",
-      "exit_price": 69990.0,
-      "exit_time": "2026-10-06 00:10",
-      "pnl": -140.0
-    },
     {
       "side": "short",
       "entry_price": 69990.0,
@@ -416,25 +400,29 @@
       "side": "long",
       "entry_price": 68650.0,
       "entry_time": "2026-10-09 10:40",
-      "exit_price": 69400.0,
-      "exit_time": "2026-10-09 15:45",
-      "pnl": 750.0,
+      "exit_price": 69385.0,
+      "exit_time": "2026-10-09 17:25",
+      "pnl": 735.0
+    },
+    {
+      "side": "short",
+      "entry_price": 69385.0,
+      "entry_time": "2026-10-09 17:25",
+      "exit_price": 69395.0,
+      "exit_time": "2026-10-09 17:40",
+      "pnl": -10.0
+    },
+    {
+      "side": "long",
+      "entry_price": 69395.0,
+      "entry_time": "2026-10-09 17:40",
+      "exit_price": 69050.0,
+      "exit_time": "2026-10-10 05:55",
+      "pnl": -345.0,
       "forced_exit": true
     }
   ],
   "equity_curve": [
-    {
-      "trade_no": 378,
-      "exit_time": "2026-09-17 10:40",
-      "cumulative_pnl": 4195.0,
-      "drawdown": -885.0
-    },
-    {
-      "trade_no": 379,
-      "exit_time": "2026-09-17 10:50",
-      "cumulative_pnl": 4025.0,
-      "drawdown": -1055.0
-    },
     {
       "trade_no": 380,
       "exit_time": "2026-09-17 11:50",
@@ -1619,9 +1607,21 @@
     },
     {
       "trade_no": 577,
-      "exit_time": "2026-10-09 15:45",
-      "cumulative_pnl": 1470.0,
-      "drawdown": -5895.0
+      "exit_time": "2026-10-09 17:25",
+      "cumulative_pnl": 1455.0,
+      "drawdown": -5910.0
+    },
+    {
+      "trade_no": 578,
+      "exit_time": "2026-10-09 17:40",
+      "cumulative_pnl": 1445.0,
+      "drawdown": -5920.0
+    },
+    {
+      "trade_no": 579,
+      "exit_time": "2026-10-10 05:55",
+      "cumulative_pnl": 1100.0,
+      "drawdown": -6265.0
     }
   ]
 }
