@@ -1,40 +1,32 @@
 {
-  "updated_at": "2026-10-21T05:32:13.906063+00:00",
+  "updated_at": "2026-10-22T05:35:49.494958+00:00",
   "data_source": "NIY=F",
-  "period_start": "2026-08-12 15:05",
-  "period_end": "2026-10-21 14:20",
+  "period_start": "2026-08-13 15:05",
+  "period_end": "2026-10-22 14:25",
   "total_days": 60,
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)。1日1回・その日最初のシグナルのみ採用し、当日中に強制決済するルールです。",
   "summary": {
     "total_trades": 59,
-    "win_trades": 30,
-    "lose_trades": 29,
-    "win_rate": 50.8,
-    "total_pnl": 1235.0,
-    "avg_win": 621.67,
-    "avg_loss": -600.52,
+    "win_trades": 31,
+    "lose_trades": 28,
+    "win_rate": 52.5,
+    "total_pnl": 2295.0,
+    "avg_win": 639.35,
+    "avg_loss": -625.89,
     "max_win": 2975.0,
     "max_loss": -1640.0,
-    "max_drawdown": -4025.0,
-    "expectancy": 20.93,
-    "profit_factor": 1.07
+    "max_drawdown": -5550.0,
+    "expectancy": 38.9,
+    "profit_factor": 1.13
   },
   "trades": [
     {
       "side": "long",
-      "entry_price": 65820.0,
-      "entry_time": "2026-08-22 00:20",
-      "exit_price": 65915.0,
-      "exit_time": "2026-08-22 05:55",
-      "pnl": 95.0
-    },
-    {
-      "side": "long",
-      "entry_price": 66105.0,
-      "entry_time": "2026-08-24 10:10",
+      "entry_price": 66175.0,
+      "entry_time": "2026-08-24 10:15",
       "exit_price": 65065.0,
       "exit_time": "2026-08-24 23:55",
-      "pnl": -1040.0
+      "pnl": -1110.0
     },
     {
       "side": "short",
@@ -72,17 +64,17 @@
       "side": "short",
       "entry_price": 66550.0,
       "entry_time": "2026-08-29 00:25",
-      "exit_price": 65850.0,
+      "exit_price": 65780.0,
       "exit_time": "2026-08-29 05:55",
-      "pnl": 700.0
+      "pnl": 770.0
     },
     {
       "side": "short",
-      "entry_price": 65670.0,
-      "entry_time": "2026-08-31 07:20",
+      "entry_price": 65745.0,
+      "entry_time": "2026-08-31 07:15",
       "exit_price": 66115.0,
       "exit_time": "2026-08-31 23:55",
-      "pnl": -445.0
+      "pnl": -370.0
     },
     {
       "side": "long",
@@ -190,11 +182,11 @@
     },
     {
       "side": "short",
-      "entry_price": 64555.0,
+      "entry_price": 64550.0,
       "entry_time": "2026-09-17 00:45",
       "exit_price": 64655.0,
       "exit_time": "2026-09-17 23:55",
-      "pnl": -100.0
+      "pnl": -105.0
     },
     {
       "side": "long",
@@ -384,9 +376,9 @@
       "side": "long",
       "entry_price": 66535.0,
       "entry_time": "2026-10-15 07:00",
-      "exit_price": 65145.0,
+      "exit_price": 65140.0,
       "exit_time": "2026-10-15 23:55",
-      "pnl": -1390.0
+      "pnl": -1395.0
     },
     {
       "side": "short",
@@ -416,365 +408,373 @@
       "side": "short",
       "entry_price": 64905.0,
       "entry_time": "2026-10-21 01:15",
-      "exit_price": 64870.0,
-      "exit_time": "2026-10-21 14:20",
-      "pnl": 35.0
+      "exit_price": 64865.0,
+      "exit_time": "2026-10-21 23:55",
+      "pnl": 40.0
+    },
+    {
+      "side": "long",
+      "entry_price": 64885.0,
+      "entry_time": "2026-10-22 00:00",
+      "exit_price": 63245.0,
+      "exit_time": "2026-10-22 14:25",
+      "pnl": -1640.0
     }
   ],
   "equity_curve": [
     {
       "trade_no": 1,
-      "exit_time": "2026-08-12 23:55",
-      "cumulative_pnl": -710.0,
+      "exit_time": "2026-08-13 23:55",
+      "cumulative_pnl": 1130.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 2,
-      "exit_time": "2026-08-13 23:55",
-      "cumulative_pnl": -1535.0,
-      "drawdown": -825.0
+      "exit_time": "2026-08-14 23:55",
+      "cumulative_pnl": 1825.0,
+      "drawdown": 0.0
     },
     {
       "trade_no": 3,
-      "exit_time": "2026-08-14 23:55",
-      "cumulative_pnl": -840.0,
-      "drawdown": -130.0
+      "exit_time": "2026-08-15 05:55",
+      "cumulative_pnl": 1965.0,
+      "drawdown": 0.0
     },
     {
       "trade_no": 4,
-      "exit_time": "2026-08-15 05:55",
-      "cumulative_pnl": -700.0,
+      "exit_time": "2026-08-17 23:55",
+      "cumulative_pnl": 2635.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 5,
-      "exit_time": "2026-08-17 23:55",
-      "cumulative_pnl": 5.0,
+      "exit_time": "2026-08-18 23:55",
+      "cumulative_pnl": 5610.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 6,
-      "exit_time": "2026-08-18 23:55",
-      "cumulative_pnl": 2980.0,
+      "exit_time": "2026-08-19 23:55",
+      "cumulative_pnl": 5655.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 7,
-      "exit_time": "2026-08-19 23:55",
-      "cumulative_pnl": 3025.0,
-      "drawdown": 0.0
-    },
-    {
-      "trade_no": 8,
       "exit_time": "2026-08-20 23:55",
-      "cumulative_pnl": 2535.0,
+      "cumulative_pnl": 5165.0,
       "drawdown": -490.0
     },
     {
-      "trade_no": 9,
+      "trade_no": 8,
       "exit_time": "2026-08-21 23:55",
-      "cumulative_pnl": 2330.0,
+      "cumulative_pnl": 4960.0,
       "drawdown": -695.0
     },
     {
-      "trade_no": 10,
+      "trade_no": 9,
       "exit_time": "2026-08-22 05:55",
-      "cumulative_pnl": 2425.0,
+      "cumulative_pnl": 5055.0,
       "drawdown": -600.0
     },
     {
-      "trade_no": 11,
+      "trade_no": 10,
       "exit_time": "2026-08-24 23:55",
-      "cumulative_pnl": 1385.0,
-      "drawdown": -1640.0
+      "cumulative_pnl": 3945.0,
+      "drawdown": -1710.0
+    },
+    {
+      "trade_no": 11,
+      "exit_time": "2026-08-25 23:55",
+      "cumulative_pnl": 3345.0,
+      "drawdown": -2310.0
     },
     {
       "trade_no": 12,
-      "exit_time": "2026-08-25 23:55",
-      "cumulative_pnl": 785.0,
-      "drawdown": -2240.0
+      "exit_time": "2026-08-26 23:55",
+      "cumulative_pnl": 3295.0,
+      "drawdown": -2360.0
     },
     {
       "trade_no": 13,
-      "exit_time": "2026-08-26 23:55",
-      "cumulative_pnl": 735.0,
-      "drawdown": -2290.0
+      "exit_time": "2026-08-27 23:55",
+      "cumulative_pnl": 3440.0,
+      "drawdown": -2215.0
     },
     {
       "trade_no": 14,
-      "exit_time": "2026-08-27 23:55",
-      "cumulative_pnl": 880.0,
-      "drawdown": -2145.0
+      "exit_time": "2026-08-28 23:55",
+      "cumulative_pnl": 4165.0,
+      "drawdown": -1490.0
     },
     {
       "trade_no": 15,
-      "exit_time": "2026-08-28 23:55",
-      "cumulative_pnl": 1605.0,
-      "drawdown": -1420.0
-    },
-    {
-      "trade_no": 16,
       "exit_time": "2026-08-29 05:55",
-      "cumulative_pnl": 2305.0,
+      "cumulative_pnl": 4935.0,
       "drawdown": -720.0
     },
     {
-      "trade_no": 17,
+      "trade_no": 16,
       "exit_time": "2026-08-31 23:55",
-      "cumulative_pnl": 1860.0,
-      "drawdown": -1165.0
+      "cumulative_pnl": 4565.0,
+      "drawdown": -1090.0
+    },
+    {
+      "trade_no": 17,
+      "exit_time": "2026-09-01 23:55",
+      "cumulative_pnl": 4105.0,
+      "drawdown": -1550.0
     },
     {
       "trade_no": 18,
-      "exit_time": "2026-09-01 23:55",
-      "cumulative_pnl": 1400.0,
-      "drawdown": -1625.0
+      "exit_time": "2026-09-02 23:55",
+      "cumulative_pnl": 4980.0,
+      "drawdown": -675.0
     },
     {
       "trade_no": 19,
-      "exit_time": "2026-09-02 23:55",
-      "cumulative_pnl": 2275.0,
-      "drawdown": -750.0
+      "exit_time": "2026-09-03 23:55",
+      "cumulative_pnl": 5410.0,
+      "drawdown": -245.0
     },
     {
       "trade_no": 20,
-      "exit_time": "2026-09-03 23:55",
-      "cumulative_pnl": 2705.0,
-      "drawdown": -320.0
+      "exit_time": "2026-09-04 23:55",
+      "cumulative_pnl": 4350.0,
+      "drawdown": -1305.0
     },
     {
       "trade_no": 21,
-      "exit_time": "2026-09-04 23:55",
-      "cumulative_pnl": 1645.0,
-      "drawdown": -1380.0
+      "exit_time": "2026-09-05 05:55",
+      "cumulative_pnl": 4295.0,
+      "drawdown": -1360.0
     },
     {
       "trade_no": 22,
-      "exit_time": "2026-09-05 05:55",
-      "cumulative_pnl": 1590.0,
-      "drawdown": -1435.0
+      "exit_time": "2026-09-08 23:55",
+      "cumulative_pnl": 5125.0,
+      "drawdown": -530.0
     },
     {
       "trade_no": 23,
-      "exit_time": "2026-09-08 23:55",
-      "cumulative_pnl": 2420.0,
-      "drawdown": -605.0
+      "exit_time": "2026-09-09 23:55",
+      "cumulative_pnl": 4285.0,
+      "drawdown": -1370.0
     },
     {
       "trade_no": 24,
-      "exit_time": "2026-09-09 23:55",
-      "cumulative_pnl": 1580.0,
-      "drawdown": -1445.0
+      "exit_time": "2026-09-10 23:55",
+      "cumulative_pnl": 4060.0,
+      "drawdown": -1595.0
     },
     {
       "trade_no": 25,
-      "exit_time": "2026-09-10 23:55",
-      "cumulative_pnl": 1355.0,
-      "drawdown": -1670.0
+      "exit_time": "2026-09-11 23:55",
+      "cumulative_pnl": 3725.0,
+      "drawdown": -1930.0
     },
     {
       "trade_no": 26,
-      "exit_time": "2026-09-11 23:55",
-      "cumulative_pnl": 1020.0,
-      "drawdown": -2005.0
+      "exit_time": "2026-09-12 05:55",
+      "cumulative_pnl": 3705.0,
+      "drawdown": -1950.0
     },
     {
       "trade_no": 27,
-      "exit_time": "2026-09-12 05:55",
-      "cumulative_pnl": 1000.0,
-      "drawdown": -2025.0
+      "exit_time": "2026-09-14 23:55",
+      "cumulative_pnl": 3240.0,
+      "drawdown": -2415.0
     },
     {
       "trade_no": 28,
-      "exit_time": "2026-09-14 23:55",
-      "cumulative_pnl": 535.0,
-      "drawdown": -2490.0
+      "exit_time": "2026-09-15 23:55",
+      "cumulative_pnl": 3235.0,
+      "drawdown": -2420.0
     },
     {
       "trade_no": 29,
-      "exit_time": "2026-09-15 23:55",
-      "cumulative_pnl": 530.0,
-      "drawdown": -2495.0
+      "exit_time": "2026-09-16 23:55",
+      "cumulative_pnl": 4320.0,
+      "drawdown": -1335.0
     },
     {
       "trade_no": 30,
-      "exit_time": "2026-09-16 23:55",
-      "cumulative_pnl": 1615.0,
-      "drawdown": -1410.0
+      "exit_time": "2026-09-17 23:55",
+      "cumulative_pnl": 4215.0,
+      "drawdown": -1440.0
     },
     {
       "trade_no": 31,
-      "exit_time": "2026-09-17 23:55",
-      "cumulative_pnl": 1515.0,
-      "drawdown": -1510.0
+      "exit_time": "2026-09-18 23:55",
+      "cumulative_pnl": 4335.0,
+      "drawdown": -1320.0
     },
     {
       "trade_no": 32,
-      "exit_time": "2026-09-18 23:55",
-      "cumulative_pnl": 1635.0,
-      "drawdown": -1390.0
+      "exit_time": "2026-09-19 05:55",
+      "cumulative_pnl": 4525.0,
+      "drawdown": -1130.0
     },
     {
       "trade_no": 33,
-      "exit_time": "2026-09-19 05:55",
-      "cumulative_pnl": 1825.0,
-      "drawdown": -1200.0
+      "exit_time": "2026-09-21 23:55",
+      "cumulative_pnl": 5675.0,
+      "drawdown": 0.0
     },
     {
       "trade_no": 34,
-      "exit_time": "2026-09-21 23:55",
-      "cumulative_pnl": 2975.0,
-      "drawdown": -50.0
+      "exit_time": "2026-09-22 23:55",
+      "cumulative_pnl": 6035.0,
+      "drawdown": 0.0
     },
     {
       "trade_no": 35,
-      "exit_time": "2026-09-22 23:55",
-      "cumulative_pnl": 3335.0,
+      "exit_time": "2026-09-23 23:55",
+      "cumulative_pnl": 6600.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 36,
-      "exit_time": "2026-09-23 23:55",
-      "cumulative_pnl": 3900.0,
-      "drawdown": 0.0
-    },
-    {
-      "trade_no": 37,
       "exit_time": "2026-09-24 23:55",
-      "cumulative_pnl": 3025.0,
+      "cumulative_pnl": 5725.0,
       "drawdown": -875.0
     },
     {
-      "trade_no": 38,
+      "trade_no": 37,
       "exit_time": "2026-09-25 23:55",
-      "cumulative_pnl": 2625.0,
+      "cumulative_pnl": 5325.0,
       "drawdown": -1275.0
     },
     {
-      "trade_no": 39,
+      "trade_no": 38,
       "exit_time": "2026-09-26 05:55",
-      "cumulative_pnl": 3065.0,
+      "cumulative_pnl": 5765.0,
       "drawdown": -835.0
     },
     {
-      "trade_no": 40,
+      "trade_no": 39,
       "exit_time": "2026-09-28 23:55",
-      "cumulative_pnl": 4140.0,
+      "cumulative_pnl": 6840.0,
+      "drawdown": 0.0
+    },
+    {
+      "trade_no": 40,
+      "exit_time": "2026-09-29 23:55",
+      "cumulative_pnl": 7845.0,
       "drawdown": 0.0
     },
     {
       "trade_no": 41,
-      "exit_time": "2026-09-29 23:55",
-      "cumulative_pnl": 5145.0,
-      "drawdown": 0.0
-    },
-    {
-      "trade_no": 42,
       "exit_time": "2026-09-30 23:55",
-      "cumulative_pnl": 3640.0,
+      "cumulative_pnl": 6340.0,
       "drawdown": -1505.0
     },
     {
-      "trade_no": 43,
+      "trade_no": 42,
       "exit_time": "2026-10-01 23:55",
-      "cumulative_pnl": 3050.0,
+      "cumulative_pnl": 5750.0,
       "drawdown": -2095.0
     },
     {
-      "trade_no": 44,
+      "trade_no": 43,
       "exit_time": "2026-10-02 23:55",
-      "cumulative_pnl": 4960.0,
+      "cumulative_pnl": 7660.0,
       "drawdown": -185.0
     },
     {
-      "trade_no": 45,
+      "trade_no": 44,
       "exit_time": "2026-10-03 05:55",
-      "cumulative_pnl": 4750.0,
+      "cumulative_pnl": 7450.0,
       "drawdown": -395.0
     },
     {
-      "trade_no": 46,
+      "trade_no": 45,
       "exit_time": "2026-10-05 23:55",
-      "cumulative_pnl": 5030.0,
+      "cumulative_pnl": 7730.0,
       "drawdown": -115.0
     },
     {
-      "trade_no": 47,
+      "trade_no": 46,
       "exit_time": "2026-10-06 23:55",
-      "cumulative_pnl": 3760.0,
+      "cumulative_pnl": 6460.0,
       "drawdown": -1385.0
     },
     {
-      "trade_no": 48,
+      "trade_no": 47,
       "exit_time": "2026-10-07 23:55",
-      "cumulative_pnl": 2120.0,
+      "cumulative_pnl": 4820.0,
       "drawdown": -3025.0
     },
     {
-      "trade_no": 49,
+      "trade_no": 48,
       "exit_time": "2026-10-08 23:55",
-      "cumulative_pnl": 2865.0,
+      "cumulative_pnl": 5565.0,
       "drawdown": -2280.0
     },
     {
-      "trade_no": 50,
+      "trade_no": 49,
       "exit_time": "2026-10-09 23:55",
-      "cumulative_pnl": 2810.0,
+      "cumulative_pnl": 5510.0,
       "drawdown": -2335.0
     },
     {
-      "trade_no": 51,
+      "trade_no": 50,
       "exit_time": "2026-10-10 05:55",
-      "cumulative_pnl": 2915.0,
+      "cumulative_pnl": 5615.0,
       "drawdown": -2230.0
     },
     {
-      "trade_no": 52,
+      "trade_no": 51,
       "exit_time": "2026-10-12 23:55",
-      "cumulative_pnl": 3400.0,
+      "cumulative_pnl": 6100.0,
       "drawdown": -1745.0
     },
     {
-      "trade_no": 53,
+      "trade_no": 52,
       "exit_time": "2026-10-13 23:55",
-      "cumulative_pnl": 2720.0,
+      "cumulative_pnl": 5420.0,
       "drawdown": -2425.0
     },
     {
-      "trade_no": 54,
+      "trade_no": 53,
       "exit_time": "2026-10-14 23:55",
-      "cumulative_pnl": 3055.0,
+      "cumulative_pnl": 5755.0,
       "drawdown": -2090.0
     },
     {
-      "trade_no": 55,
+      "trade_no": 54,
       "exit_time": "2026-10-15 23:55",
-      "cumulative_pnl": 1665.0,
-      "drawdown": -3480.0
+      "cumulative_pnl": 4360.0,
+      "drawdown": -3485.0
+    },
+    {
+      "trade_no": 55,
+      "exit_time": "2026-10-16 23:55",
+      "cumulative_pnl": 4685.0,
+      "drawdown": -3160.0
     },
     {
       "trade_no": 56,
-      "exit_time": "2026-10-16 23:55",
-      "cumulative_pnl": 1990.0,
-      "drawdown": -3155.0
+      "exit_time": "2026-10-19 23:55",
+      "cumulative_pnl": 3815.0,
+      "drawdown": -4030.0
     },
     {
       "trade_no": 57,
-      "exit_time": "2026-10-19 23:55",
-      "cumulative_pnl": 1120.0,
-      "drawdown": -4025.0
+      "exit_time": "2026-10-20 23:55",
+      "cumulative_pnl": 3895.0,
+      "drawdown": -3950.0
     },
     {
       "trade_no": 58,
-      "exit_time": "2026-10-20 23:55",
-      "cumulative_pnl": 1200.0,
-      "drawdown": -3945.0
+      "exit_time": "2026-10-21 23:55",
+      "cumulative_pnl": 3935.0,
+      "drawdown": -3910.0
     },
     {
       "trade_no": 59,
-      "exit_time": "2026-10-21 14:20",
-      "cumulative_pnl": 1235.0,
-      "drawdown": -3910.0
+      "exit_time": "2026-10-22 14:25",
+      "cumulative_pnl": 2295.0,
+      "drawdown": -5550.0
     }
   ]
 }
