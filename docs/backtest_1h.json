@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-11-06T07:29:49.385384+00:00",
+  "updated_at": "2026-11-07T06:42:40.979620+00:00",
   "data_source": "NIY=F",
   "period_start": "2024-06-18 08:00",
-  "period_end": "2026-11-06 16:00",
+  "period_end": "2026-11-07 06:00",
   "unit_note": "1時間足を使った長期検証です(約2年分)。実際のライブシステムは5分足でシグナル判定しているため、この結果は5分足の精度をそのまま代表するものではなく、同じロジックを長期間・粗い足で見た場合の参考値です。損益は日経225指数ポイント換算(円換算・手数料/スプレッド控除前の理論値)。",
   "summary": {
     "total_trades": 529,
     "win_trades": 185,
     "lose_trades": 344,
     "win_rate": 35.0,
-    "total_pnl": 45.0,
+    "total_pnl": 995.0,
     "avg_win": 712.84,
-    "avg_loss": -383.23,
+    "avg_loss": -380.47,
     "max_win": 5175.0,
-    "max_loss": -5895.0,
+    "max_loss": -4945.0,
     "max_drawdown": -11250.0,
-    "expectancy": 0.09,
-    "profit_factor": 1.0
+    "expectancy": 1.88,
+    "profit_factor": 1.01
   },
   "trades": [
     {
@@ -415,9 +415,9 @@
       "side": "long",
       "entry_price": 63265.0,
       "entry_time": "2026-11-03 23:00",
-      "exit_price": 57370.0,
-      "exit_time": "2026-11-06 16:00",
-      "pnl": -5895.0,
+      "exit_price": 58320.0,
+      "exit_time": "2026-11-07 06:00",
+      "pnl": -4945.0,
       "forced_exit": true
     }
   ],
@@ -1618,9 +1618,9 @@
     },
     {
       "trade_no": 529,
-      "exit_time": "2026-11-06 16:00",
-      "cumulative_pnl": 45.0,
-      "drawdown": -10370.0
+      "exit_time": "2026-11-07 06:00",
+      "cumulative_pnl": 995.0,
+      "drawdown": -9420.0
     }
   ]
 }
