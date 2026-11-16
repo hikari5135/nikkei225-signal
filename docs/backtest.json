@@ -1,33 +1,25 @@
 {
-  "updated_at": "2026-11-15T07:20:52.998274+00:00",
+  "updated_at": "2026-11-16T07:28:20.779513+00:00",
   "data_source": "NIY=F",
   "period_start": "2026-09-08 15:00",
-  "period_end": "2026-11-14 06:55",
+  "period_end": "2026-11-16 16:15",
   "unit_note": "損益は日経225指数ポイント換算です(円換算・手数料/スプレッド控除前の理論値)",
   "summary": {
-    "total_trades": 574,
+    "total_trades": 575,
     "win_trades": 185,
-    "lose_trades": 389,
+    "lose_trades": 390,
     "stop_loss_trades": 0,
     "win_rate": 32.2,
-    "total_pnl": -5820.0,
-    "avg_win": 290.24,
-    "avg_loss": -152.99,
+    "total_pnl": -4660.0,
+    "avg_win": 296.65,
+    "avg_loss": -152.67,
     "max_win": 1760.0,
     "max_loss": -4565.0,
     "max_drawdown": -15825.0,
-    "expectancy": -10.14,
-    "profit_factor": 0.9
+    "expectancy": -8.1,
+    "profit_factor": 0.92
   },
   "trades": [
-    {
-      "side": "long",
-      "entry_price": 58315.0,
-      "entry_time": "2026-11-07 04:55",
-      "exit_price": 58205.0,
-      "exit_time": "2026-11-07 05:45",
-      "pnl": -110.0
-    },
     {
       "side": "short",
       "entry_price": 58205.0,
@@ -416,19 +408,21 @@
       "side": "short",
       "entry_price": 61530.0,
       "entry_time": "2026-11-13 21:35",
-      "exit_price": 61065.0,
-      "exit_time": "2026-11-14 06:55",
-      "pnl": 465.0,
+      "exit_price": 59880.0,
+      "exit_time": "2026-11-16 16:05",
+      "pnl": 1650.0
+    },
+    {
+      "side": "long",
+      "entry_price": 59880.0,
+      "entry_time": "2026-11-16 16:05",
+      "exit_price": 59855.0,
+      "exit_time": "2026-11-16 16:15",
+      "pnl": -25.0,
       "forced_exit": true
     }
   ],
   "equity_curve": [
-    {
-      "trade_no": 375,
-      "exit_time": "2026-10-21 23:55",
-      "cumulative_pnl": -3350.0,
-      "drawdown": -8540.0
-    },
     {
       "trade_no": 376,
       "exit_time": "2026-10-22 00:00",
@@ -1619,9 +1613,15 @@
     },
     {
       "trade_no": 574,
-      "exit_time": "2026-11-14 06:55",
-      "cumulative_pnl": -5820.0,
-      "drawdown": -11010.0
+      "exit_time": "2026-11-16 16:05",
+      "cumulative_pnl": -4635.0,
+      "drawdown": -9825.0
+    },
+    {
+      "trade_no": 575,
+      "exit_time": "2026-11-16 16:15",
+      "cumulative_pnl": -4660.0,
+      "drawdown": -9850.0
     }
   ]
 }
